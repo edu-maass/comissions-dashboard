@@ -4,7 +4,7 @@ Dashboard para gestión y visualización de comisiones de viajes con esquemas de
 
 ## 🚀 Demo en Vivo
 
-**GitHub Pages**: [https://tuusuario.github.io/commissions-dashboard-fixed/](https://tuusuario.github.io/commissions-dashboard-fixed/)
+**GitHub Pages**: [https://edu-maass.github.io/comissions-dashboard/](https://edu-maass.github.io/comissions-dashboard/)
 
 ## 📋 Características
 

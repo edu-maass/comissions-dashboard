@@ -4,7 +4,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/commissions-dashboard-fixed/', // Base path para GitHub Pages
+  base: '/comissions-dashboard/', // Base path para GitHub Pages
   server: {
     port: 5173,
     hmr: {
