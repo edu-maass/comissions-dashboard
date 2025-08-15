@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --card: 255 255 255;
+  --muted: 244 244 245;
+  --border: 228 228 231;
+}
+.dark {
+  --card: 15 15 15;
+  --muted: 32 32 32;
+  --border: 38 38 38;
+}
+
+.card {
+  @apply rounded-2xl shadow-soft bg-[rgb(var(--card))] p-4 border border-[rgb(var(--border))];
+}
+.kpi {
+  @apply card flex flex-col gap-1;
+}
+.btn {
+  @apply inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors;
+}
+.btn-primary {
+  @apply btn bg-neutral-900 text-white border-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200;
+}
+.btn-ghost {
+  @apply btn border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800;
+}
+.input {
+  @apply w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 outline-none focus:ring-2 focus:ring-neutral-400;
+}
+.badge {
+  @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs border-neutral-300 dark:border-neutral-700;
+}
+.table-sticky-right {
+  position: sticky;
+  right: 0;
+  background: rgb(var(--card));
+}
