@@ -12,7 +12,6 @@ export default function CommissionsTable({ data, onRowOpen }:{ data:Viaje[]; onR
   const columns = React.useMemo(()=>[
     columnHelper.accessor('booking', {
       header: 'Booking',
-
       cell: info => <button className="underline" onClick={()=>onRowOpen(info.row.original)}>{info.getValue()}</button>,
       enableSorting: true
     }),
@@ -126,24 +125,6 @@ export default function CommissionsTable({ data, onRowOpen }:{ data:Viaje[]; onR
       },
       enableSorting: true
     }),
-    // Columna de aprobación de bono 5S
-    columnHelper.accessor('bono5SAprobado', {
-      header: 'Aprobar Bono 5S',
-      cell: info => {
-        const viaje = info.row.original
-        if (viaje.reviews5S.cantidad === 0) {
-          return <span className="text-gray-400 text-sm">N/A</span>
-        }
-        if (viaje.bono5SAprobado === undefined) {
-          return <span className="text-yellow-600 text-sm">Pendiente</span>
-        } else if (viaje.bono5SAprobado) {
-          return <span className="text-green-600 text-sm">✓ Aprobado</span>
-        } else {
-          return <span className="text-red-600 text-sm">✗ Rechazado</span>
-        }
-      },
-      enableSorting: true
-    }),
   ], [])
 
   const table = useReactTable({
@@ -172,10 +153,12 @@ export default function CommissionsTable({ data, onRowOpen }:{ data:Viaje[]; onR
           <thead className="sticky top-0 bg-white border-b border-gray-200 z-10">
             {table.getHeaderGroups().map(hg=> (
               <tr key={hg.id}>
-                {hg.headers.map(h=> (
+                {hg.headers.map((h, index)=> (
                   <th 
                     key={h.id} 
-                    className="text-left text-xs font-medium px-3 py-3 whitespace-nowrap cursor-pointer select-none bg-white border-r border-gray-200 last:border-r-0" 
+                    className={`text-left text-xs font-medium px-3 py-3 whitespace-nowrap cursor-pointer select-none bg-white border-r border-gray-200 last:border-r-0 ${
+                      index === 0 ? 'sticky-left-header' : ''
+                    }`}
                     onClick={h.column.getToggleSortingHandler()}
                     style={{ minWidth: '120px' }}
                   >
@@ -195,12 +178,14 @@ export default function CommissionsTable({ data, onRowOpen }:{ data:Viaje[]; onR
               <tr
                 key={row.id}
                 className="hover:bg-gray-50 cursor-pointer border-b border-gray-100"
-                onDoubleClick={() => onRowOpen(row.original)}
+                onClick={() => onRowOpen(row.original)}
               >
-                {row.getVisibleCells().map(cell => (
+                {row.getVisibleCells().map((cell, index) => (
                   <td 
                     key={cell.id} 
-                    className="px-3 py-3 text-sm border-r border-gray-100 last:border-r-0"
+                    className={`px-3 py-3 text-sm border-r border-gray-100 last:border-r-0 ${
+                      index === 0 ? 'sticky-left bg-white' : ''
+                    }`}
                     style={{ minWidth: '120px' }}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

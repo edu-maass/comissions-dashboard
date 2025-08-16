@@ -96,6 +96,16 @@ export function parseCSVToViajes(csvText: string): Viaje[] {
         tripbook: tripbook,
         utilidadCotizada: utilidadCotizada,
         utilidadReal: utilidadReal,
+        ingresoCotizado: utilidadCotizada + (Math.random() * 100000 + 50000),
+        ingresoReal: utilidadReal > 0 ? utilidadCotizada * (0.8 + Math.random() * 0.4) : 0,
+        cogsCotizados: (utilidadCotizada + (Math.random() * 100000 + 50000)) - utilidadCotizada,
+        cogsReales: utilidadReal > 0 ? (utilidadCotizada * (0.8 + Math.random() * 0.4)) - utilidadReal : 0,
+        comprador: (['Evaneos Fr', 'Kim kim', 'Travel Local', 'Evaneos It', 'Tourlane'] as const)[Math.floor(Math.random() * 5)],
+        ingresoMonedaOriginal: {
+          monto: utilidadCotizada * (Math.random() > 0.5 ? 0.055 : 0.050),
+          moneda: Math.random() > 0.5 ? 'USD' : 'EUR',
+          tipoCambio: Math.random() > 0.5 ? 16.5 + Math.random() * 3 : 17.5 + Math.random() * 2
+        },
         nps: nps,
         diasViaje: diasViaje,
         anticipo: {

@@ -26,6 +26,17 @@ export type Viaje = {
   utilidadReal: number
   nps: number
   diasViaje: number
+  // Nuevos campos agregados
+  ingresoCotizado: number
+  ingresoReal: number
+  cogsCotizados: number
+  cogsReales: number
+  comprador: 'Evaneos Fr' | 'Kim kim' | 'Travel Local' | 'Evaneos It' | 'Tourlane'
+  ingresoMonedaOriginal: {
+    monto: number
+    moneda: 'USD' | 'EUR'
+    tipoCambio: number
+  }
   anticipo: {
     porcentaje: number
     monto: number

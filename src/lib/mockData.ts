@@ -18,6 +18,28 @@ export function seedViajes(): Viaje[] {
     const utilidadCotizada = Math.random() * 50000 + 5000
     const utilidadReal = Math.random() > 0.3 ? utilidadCotizada * (0.8 + Math.random() * 0.4) : 0
     
+    // Nuevos campos agregados
+    const ingresoCotizado = utilidadCotizada + (Math.random() * 100000 + 50000) // Ingreso = utilidad + costos
+    const ingresoReal = utilidadReal > 0 ? ingresoCotizado * (0.8 + Math.random() * 0.4) : 0
+    const cogsCotizados = ingresoCotizado - utilidadCotizada
+    const cogsReales = ingresoReal > 0 ? ingresoReal - utilidadReal : 0
+    
+    // Compradores disponibles
+    const compradores: Array<'Evaneos Fr' | 'Kim kim' | 'Travel Local' | 'Evaneos It' | 'Tourlane'> = [
+      'Evaneos Fr', 'Kim kim', 'Travel Local', 'Evaneos It', 'Tourlane'
+    ]
+    const comprador = compradores[Math.floor(Math.random() * compradores.length)]
+    
+    // Moneda original (USD o EUR)
+    const monedas: Array<'USD' | 'EUR'> = ['USD', 'EUR']
+    const monedaOriginal = monedas[Math.floor(Math.random() * monedas.length)]
+    const tipoCambio = monedaOriginal === 'USD' ? 16.5 + Math.random() * 3 : 17.5 + Math.random() * 2 // Tipo de cambio realista
+    const ingresoMonedaOriginal = {
+      monto: ingresoCotizado * (monedaOriginal === 'USD' ? 0.055 : 0.050), // Conversión aproximada a USD/EUR
+      moneda: monedaOriginal,
+      tipoCambio
+    }
+    
     // Determinar esquema basado en fecha de venta
     const fechaLimite = new Date('2025-09-01')
     const esEsquemaNuevo = fechaVenta >= fechaLimite
@@ -89,6 +111,11 @@ export function seedViajes(): Viaje[] {
       tripbook: `Tripbook ${i + 1}`,
       utilidadCotizada,
       utilidadReal,
+      ingresoCotizado,
+      ingresoReal,
+      cogsCotizados,
+      cogsReales,
+      comprador,
       nps: Math.floor(Math.random() * 10) + 1,
       diasViaje: Math.floor(Math.random() * 30) + 1,
       anticipo: {
@@ -111,7 +138,8 @@ export function seedViajes(): Viaje[] {
         pagado: comision5SPagada,
         porPagar: comision5S - comision5SPagada
       },
-      porPagar
+      porPagar,
+      ingresoMonedaOriginal
     })
   }
   

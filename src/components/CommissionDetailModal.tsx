@@ -5,7 +5,7 @@ import { fmtMXN } from '../lib/format'
 interface Props {
   viaje: Viaje | null
   onClose: () => void
-  onUpdate: (viaje: Viaje) => void
+  onUpdate?: (viaje: Viaje) => void
 }
 
 export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Props) {
@@ -22,7 +22,10 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
       comisionAprobada: true,
       notaComision: undefined
     }
-    onUpdate(viajeActualizado)
+    if (onUpdate) {
+      onUpdate(viajeActualizado)
+    }
+    onClose()
   }
 
   const handleRechazarComision = () => {
@@ -32,9 +35,12 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
         comisionAprobada: false,
         notaComision: notaComision.trim()
       }
-      onUpdate(viajeActualizado)
+      if (onUpdate) {
+        onUpdate(viajeActualizado)
+      }
       setShowNotaComision(false)
       setNotaComision('')
+      onClose()
     }
   }
 
@@ -44,7 +50,10 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
       bono5SAprobado: true,
       notaBono5S: undefined
     }
-    onUpdate(viajeActualizado)
+    if (onUpdate) {
+      onUpdate(viajeActualizado)
+    }
+    onClose()
   }
 
   const handleRechazarBono5S = () => {
@@ -54,9 +63,12 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
         bono5SAprobado: false,
         notaBono5S: notaBono5S.trim()
       }
-      onUpdate(viajeActualizado)
+      if (onUpdate) {
+        onUpdate(viajeActualizado)
+      }
       setShowNotaBono5S(false)
       setNotaBono5S('')
+      onClose()
     }
   }
 
@@ -78,8 +90,8 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
               <p><span className="font-medium">Especialista:</span> {viaje.especialista}</p>
               <p><span className="font-medium">Fecha de Venta:</span> {new Date(viaje.fechaVenta).toLocaleDateString()}</p>
               <p><span className="font-medium">Fecha de Viaje:</span> {new Date(viaje.fechaViaje).toLocaleDateString()}</p>
-              <p><span className="font-medium">Utilidad Cotizada:</span> {fmtMXN(viaje.utilidadCotizada)}</p>
-              <p><span className="font-medium">Utilidad Real:</span> {fmtMXN(viaje.utilidadReal)}</p>
+              <p><span className="font-medium">Días de Viaje:</span> {viaje.diasViaje}</p>
+              <p><span className="font-medium">Comprador:</span> {viaje.comprador}</p>
               <p><span className="font-medium">NPS:</span> {viaje.nps}/10</p>
             </div>
           </div>
@@ -88,13 +100,63 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
             <h3 className="font-semibold text-gray-900 mb-2">Comisiones</h3>
             <div className="space-y-2 text-sm">
               <p><span className="font-medium">Anticipo:</span> {fmtMXN(viaje.anticipo.monto)} ({viaje.anticipo.status})</p>
+              <p><span className="font-medium">Porcentaje Anticipo:</span> {(viaje.anticipo.porcentaje * 100).toFixed(1)}%</p>
               <p><span className="font-medium">Liquidación:</span> {fmtMXN(viaje.liquidacion.monto)} ({viaje.liquidacion.status})</p>
+              <p><span className="font-medium">Porcentaje Liquidación:</span> {(viaje.liquidacion.porcentaje * 100).toFixed(1)}%</p>
               <p><span className="font-medium">Total Comisión:</span> {fmtMXN(viaje.comisionTotal)}</p>
               {viaje.reviews5S.cantidad > 0 && (
                 <p><span className="font-medium">Bono 5S:</span> {fmtMXN(viaje.reviews5S.comision)} ({viaje.reviews5S.cantidad} reviews)</p>
               )}
               <p><span className="font-medium">Por Pagar:</span> {fmtMXN(viaje.porPagar)}</p>
             </div>
+          </div>
+        </div>
+
+        {/* Resumen Financiero - Nueva ubicación */}
+        <div className="mt-6">
+          <h3 className="font-semibold text-gray-900 mb-3">Resumen Financiero</h3>
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200"></th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Ingreso {viaje.ingresoMonedaOriginal.moneda}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Tipo de Cambio</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Ingreso (MXN)</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">COGS</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Utilidad</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Margen %</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                <tr className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900 border-r border-gray-200">Cotizado</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">
+                    {viaje.ingresoMonedaOriginal.moneda === 'USD' ? '$' : '€'}{Math.round(viaje.ingresoMonedaOriginal.monto).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-900">{viaje.ingresoMonedaOriginal.tipoCambio.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">${Math.round(viaje.ingresoCotizado).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">${Math.round(viaje.cogsCotizados).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">${Math.round(viaje.utilidadCotizada).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                    {Math.round((viaje.utilidadCotizada / viaje.ingresoCotizado) * 100)}%
+                  </td>
+                </tr>
+                <tr className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900 border-r border-gray-200">Real</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">
+                    {viaje.ingresoMonedaOriginal.moneda === 'USD' ? '$' : '€'}{Math.round(viaje.ingresoMonedaOriginal.monto).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-900">{(viaje.ingresoReal / viaje.ingresoMonedaOriginal.monto).toFixed(2)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">${Math.round(viaje.ingresoReal).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">${Math.round(viaje.cogsReales).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">${Math.round(viaje.utilidadReal).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                    {viaje.ingresoReal > 0 ? Math.round((viaje.utilidadReal / viaje.ingresoReal) * 100) : 0}%
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -225,16 +287,16 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
                 >
                   Confirmar Rechazo
                 </button>
-                                 <button
-                   onClick={() => setShowNotaBono5S(false)}
-                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-                 >
-                   Cancelar
-                 </button>
-               </div>
-             </div>
-           </div>
-         )}
+                <button
+                  onClick={() => setShowNotaBono5S(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 flex justify-end">
           <button

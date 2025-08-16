@@ -29,7 +29,7 @@
   @apply btn border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800;
 }
 .input {
-  @apply w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 outline-none focus:ring-2 focus:ring-neutral-400;
+  @apply w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-400;
 }
 .badge {
   @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs border-neutral-300 dark:border-neutral-700;
@@ -38,4 +38,17 @@
   position: sticky;
   right: 0;
   background: rgb(var(--card));
+}
+
+/* Sticky table columns */
+.sticky-left {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+}
+
+.sticky-left-header {
+  position: sticky;
+  left: 0;
+  z-index: 20;
 }

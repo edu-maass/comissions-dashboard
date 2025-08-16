@@ -73,6 +73,16 @@ export default function Dashboard() {
             tripbook: 'Tripbook Test 1',
             utilidadCotizada: 25000,
             utilidadReal: 22000,
+            ingresoCotizado: 150000,
+            ingresoReal: 140000,
+            cogsCotizados: 125000,
+            cogsReales: 118000,
+            comprador: 'Evaneos Fr' as const,
+            ingresoMonedaOriginal: {
+              monto: 7500,
+              moneda: 'USD' as const,
+              tipoCambio: 18.5
+            },
             nps: 8,
             diasViaje: 7,
             anticipo: {
@@ -376,23 +386,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Componente de prueba */}
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-        <strong>🔍 DEBUG:</strong> Dashboard renderizando
-        <br />
-        <strong>Usuario:</strong> {user?.nombre || 'No hay usuario'}
-        <br />
-        <strong>Loading:</strong> {loading ? 'Sí' : 'No'}
-        <br />
-        <strong>AllViajes:</strong> {allViajes.length}
-        <br />
-        <strong>Highlights:</strong> {highlights ? 'Sí' : 'No'}
-        <br />
-        <strong>BonoE:</strong> {bonoE ? 'Sí' : 'No'}
-        <br />
-        <strong>Bono5SE:</strong> {bono5SE ? 'Sí' : 'No'}
-      </div>
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -466,6 +459,22 @@ export default function Dashboard() {
                       textAnchor="end"
                       height={80}
                       interval={0}
+                      tickFormatter={(value) => {
+                        // Convertir "septiembre de 2024" a "sep-24"
+                        const monthMap: { [key: string]: string } = {
+                          'enero': 'ene', 'febrero': 'feb', 'marzo': 'mar', 'abril': 'abr',
+                          'mayo': 'may', 'junio': 'jun', 'julio': 'jul', 'agosto': 'ago',
+                          'septiembre': 'sep', 'octubre': 'oct', 'noviembre': 'nov', 'diciembre': 'dic'
+                        };
+                        
+                        const parts = value.split(' de ');
+                        if (parts.length === 2) {
+                          const month = monthMap[parts[0].toLowerCase()] || parts[0].substring(0, 3);
+                          const year = parts[1].substring(2); // Tomar solo los últimos 2 dígitos del año
+                          return `${month}-${year}`;
+                        }
+                        return value;
+                      }}
                     />
                     <YAxis />
                     <Tooltip formatter={(value) => fmtMXN(value as number)} />
@@ -482,42 +491,35 @@ export default function Dashboard() {
           {/* Bono E - Datos Principales */}
           <section className="card p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Bono E - Datos Principales</h2>
-            <div className="grid gap-6 md:grid-cols-2 mb-8">
-              {/* Columna 1 */}
-              <div className="space-y-4">
-                {/* Viajes Vendidos - Más pequeño */}
-                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                  <div className="text-xs text-gray-600 font-medium">Viajes Vendidos</div>
-                  <div className="text-lg font-semibold text-gray-900">{bonoE.numeroViajesVendidos}</div>
-                </div>
-                {/* Utilidad Cotizada - Más grande */}
-                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                  <div className="text-sm text-gray-600 font-medium">Utilidad Cotizada</div>
-                  <div className="text-4xl font-bold text-gray-900">{fmtMXN(bonoE.sumaUtilidadCotizada)}</div>
-                </div>
-                {/* Anticipos - Más grande */}
-                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                  <div className="text-sm text-gray-600 font-medium">Anticipos</div>
-                  <div className="text-4xl font-bold text-gray-900">{fmtMXN(bonoE.sumaAnticipos)}</div>
-                </div>
+            
+            {/* Todos los KPIs en una sola fila */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {/* KPI Card - Utilidad Cotizada */}
+              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow">
+                <div className="text-sm text-gray-600 font-medium mb-2">Utilidad Cotizada (MXN)</div>
+                <div className="text-4xl font-bold text-gray-900 mb-2">{Math.round(bonoE.sumaUtilidadCotizada).toLocaleString()}</div>
+                <div className="text-sm text-gray-600">{bonoE.numeroViajesVendidos} viajes vendidos</div>
               </div>
-              {/* Columna 2 */}
-              <div className="space-y-4">
-                {/* Viajes Operados - Más pequeño */}
-                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                  <div className="text-xs text-gray-600 font-medium">Viajes Operados</div>
-                  <div className="text-lg font-semibold text-gray-900">{bonoE.numeroViajesOperados}</div>
-                </div>
-                {/* Utilidad Real - Más grande */}
-                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                  <div className="text-sm text-gray-600 font-medium">Utilidad Real</div>
-                  <div className="text-4xl font-bold text-gray-900">{fmtMXN(bonoE.sumaUtilidadReal)}</div>
-                </div>
-                {/* Liquidaciones - Más grande */}
-                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                  <div className="text-sm text-gray-600 font-medium">Liquidaciones</div>
-                  <div className="text-4xl font-bold text-gray-900">{fmtMXN(bonoE.sumaLiquidaciones)}</div>
-                </div>
+              
+              {/* KPI Card - Anticipos */}
+              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow">
+                <div className="text-sm text-gray-600 font-medium mb-2">Anticipos (MXN)</div>
+                <div className="text-4xl font-bold text-gray-900 mb-2">{Math.round(bonoE.sumaAnticipos).toLocaleString()}</div>
+                <div className="text-sm text-gray-600">Total del período</div>
+              </div>
+              
+              {/* KPI Card - Utilidad Real */}
+              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow">
+                <div className="text-sm text-gray-600 font-medium mb-2">Utilidad Real (MXN)</div>
+                <div className="text-4xl font-bold text-gray-900 mb-2">{Math.round(bonoE.sumaUtilidadReal).toLocaleString()}</div>
+                <div className="text-sm text-gray-600">{bonoE.numeroViajesOperados} viajes operados</div>
+              </div>
+              
+              {/* KPI Card - Liquidaciones */}
+              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow">
+                <div className="text-sm text-gray-600 font-medium mb-2">Liquidaciones (MXN)</div>
+                <div className="text-4xl font-bold text-gray-900 mb-2">{Math.round(bonoE.sumaLiquidaciones).toLocaleString()}</div>
+                <div className="text-sm text-gray-600">Total del período</div>
               </div>
             </div>
 

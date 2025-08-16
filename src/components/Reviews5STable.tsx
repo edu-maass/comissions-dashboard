@@ -122,10 +122,12 @@ export default function Reviews5STable({ data, onRowOpen }: Reviews5STableProps)
           <thead className="sticky top-0 bg-white border-b border-gray-200 z-10">
             {table.getHeaderGroups().map(hg => (
               <tr key={hg.id}>
-                {hg.headers.map(h => (
+                {hg.headers.map((h, index) => (
                   <th 
                     key={h.id} 
-                    className="text-left text-xs font-medium px-3 py-3 whitespace-nowrap cursor-pointer select-none bg-white border-r border-gray-200 last:border-r-0" 
+                    className={`text-left text-xs font-medium px-3 py-3 whitespace-nowrap cursor-pointer select-none bg-white border-r border-gray-200 last:border-r-0 ${
+                      index === 0 ? 'sticky-left-header' : ''
+                    }`}
                     onClick={h.column.getToggleSortingHandler()}
                     style={{ minWidth: '120px' }}
                   >
@@ -145,12 +147,14 @@ export default function Reviews5STable({ data, onRowOpen }: Reviews5STableProps)
               <tr
                 key={row.id}
                 className="hover:bg-gray-50 cursor-pointer border-b border-gray-100"
-                onDoubleClick={() => onRowOpen(row.original)}
+                onClick={() => onRowOpen(row.original)}
               >
-                {row.getVisibleCells().map(cell => (
+                {row.getVisibleCells().map((cell, index) => (
                   <td 
                     key={cell.id} 
-                    className="px-3 py-3 text-sm border-r border-gray-100 last:border-r-0"
+                    className={`px-3 py-3 text-sm border-r border-gray-100 last:border-r-0 ${
+                      index === 0 ? 'sticky-left bg-white' : ''
+                    }`}
                     style={{ minWidth: '120px' }}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

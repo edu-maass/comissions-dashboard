@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useSession } from '../state/useSession'
-import { generateHistoricoMensual } from '../lib/mockData'
+import { generateHistoricoMensual, seedViajes } from '../lib/mockData'
 import { fmtMXN } from '../lib/format'
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts'
+import CommissionDetailModal from '../components/CommissionDetailModal'
+import CommissionsTable from '../components/CommissionsTable'
+import Reviews5STable from '../components/Reviews5STable'
+import type { Viaje } from '../lib/types'
 
 export default function Historic() {
   const { user } = useSession()
   const [historicoMensual, setHistoricoMensual] = useState<{ mes: string; comisiones: number; anticipos: number; liquidaciones: number; reviews5S: number }[]>([])
   const [loading, setLoading] = useState(false)
+  const [detail, setDetail] = useState<Viaje | null>(null)
+  const [allViajes, setAllViajes] = useState<Viaje[]>([])
 
   useEffect(() => {
     if (!user) return
@@ -16,10 +22,36 @@ export default function Historic() {
     // Generar datos históricos mensuales
     const historico = generateHistoricoMensual()
     setHistoricoMensual(historico)
+    
+    // Cargar viajes para calcular KPIs
+    const viajes = seedViajes()
+    setAllViajes(viajes)
     setLoading(false)
   }, [user])
 
+  // Función para actualizar un viaje
+  const handleUpdateViaje = (viajeActualizado: Viaje) => {
+    setAllViajes(prev => prev.map(v => v.id === viajeActualizado.id ? viajeActualizado : v))
+    setDetail(null) // Cerrar el modal
+  }
+
+  // Calcular KPIs del período actual
+  const calcularKPIs = () => {
+    if (allViajes.length === 0) return { anticipos: 0, viajesVendidos: 0, liquidaciones: 0, viajesOperados: 0 }
+    
+    const anticipos = allViajes.reduce((sum, v) => sum + (v.anticipo.status === 'Pagado' ? v.anticipo.monto : 0), 0)
+    const viajesVendidos = allViajes.length
+    const liquidaciones = allViajes.reduce((sum, v) => sum + (v.liquidacion.status === 'Pagada' ? v.liquidacion.monto : 0), 0)
+    const viajesOperados = allViajes.filter(v => v.utilidadReal > 0).length
+    
+    return { anticipos, viajesVendidos, liquidaciones, viajesOperados }
+  }
+
+  const kpis = calcularKPIs()
+
   if (loading) return <div className="text-center py-8">Cargando histórico...</div>
+  
+  if (!user) return <div className="text-center py-8">Por favor inicia sesión para ver el histórico</div>
 
   return (
     <div className="space-y-6">
@@ -64,7 +96,7 @@ export default function Historic() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky-left-header bg-gray-50">
                   Mes
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -83,8 +115,8 @@ export default function Historic() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {historicoMensual.map((item, index) => (
-                <tr key={index}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <tr key={index} className="hover:bg-gray-50 cursor-pointer">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky-left bg-white">
                     {item.mes}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600">
@@ -105,6 +137,15 @@ export default function Historic() {
           </table>
         </div>
       </div>
+
+      {/* Modal de detalle */}
+      {detail && (
+        <CommissionDetailModal
+          viaje={detail}
+          onClose={() => setDetail(null)}
+          onUpdate={handleUpdateViaje}
+        />
+      )}
     </div>
   )
 }
