@@ -34,16 +34,6 @@ export default function CommissionsTable({ data, onRowOpen }:{ data:Viaje[]; onR
       cell: info => fmtMXN(info.getValue()),
       enableSorting: true
     }),
-    columnHelper.accessor('utilidadReal', { 
-      header: 'Utilidad Real', 
-      cell: info => info.getValue() ? fmtMXN(info.getValue()!) : <span title="No disponible">N/A</span>,
-      enableSorting: true
-    }),
-    columnHelper.accessor('nps', { 
-      header: 'NPS', 
-      cell: info => info.getValue(),
-      enableSorting: true
-    }),
     columnHelper.accessor('anticipo.porcentaje', { 
       header: 'Anticipo %', 
       cell: info => `${(info.getValue()*100).toFixed(1)}%`,
@@ -61,6 +51,11 @@ export default function CommissionsTable({ data, onRowOpen }:{ data:Viaje[]; onR
         const cl = v==='Pagado' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'
         return <span className={`px-2 py-1 rounded-full text-xs font-medium border ${cl}`}>{v}</span>
       },
+      enableSorting: true
+    }),
+    columnHelper.accessor('utilidadReal', { 
+      header: 'Utilidad Real', 
+      cell: info => info.getValue() ? fmtMXN(info.getValue()!) : <span title="No disponible">N/A</span>,
       enableSorting: true
     }),
     columnHelper.accessor('liquidacion.porcentaje', { 
