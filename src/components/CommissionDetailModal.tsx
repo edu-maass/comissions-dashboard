@@ -11,8 +11,12 @@ interface Props {
 export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Props) {
   const [notaAnticipo, setNotaAnticipo] = useState(viaje?.anticipo.notaRechazo || '')
   const [notaLiquidacion, setNotaLiquidacion] = useState(viaje?.liquidacion.notaRechazo || '')
+  const [notaAnticipoPospuesto, setNotaAnticipoPospuesto] = useState(viaje?.anticipo.notaPospuesto || '')
+  const [notaLiquidacionPospuesta, setNotaLiquidacionPospuesta] = useState(viaje?.liquidacion.notaPospuesto || '')
   const [showNotaAnticipo, setShowNotaAnticipo] = useState(false)
   const [showNotaLiquidacion, setShowNotaLiquidacion] = useState(false)
+  const [showPosponerAnticipo, setShowPosponerAnticipo] = useState(false)
+  const [showPosponerLiquidacion, setShowPosponerLiquidacion] = useState(false)
 
   if (!viaje) return null
 
@@ -84,6 +88,70 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
       }
       setShowNotaLiquidacion(false)
       setNotaLiquidacion('')
+      onClose()
+    }
+  }
+
+  // Función para posponer anticipo (también pospone liquidación)
+  const handlePosponerAnticipo = () => {
+    if (notaAnticipoPospuesto.trim()) {
+      const viajeActualizado = {
+        ...viaje,
+        anticipo: {
+          ...viaje.anticipo,
+          aprobado: false,
+          status: 'Pospuesto' as const,
+          notaPospuesto: notaAnticipoPospuesto.trim(),
+          notaRechazo: undefined
+        },
+        liquidacion: {
+          ...viaje.liquidacion,
+          // Solo posponer liquidación si no está pagada
+          ...(viaje.liquidacion.status !== 'Pagado' && {
+            aprobado: false,
+            status: 'Pospuesto' as const,
+            notaPospuesto: 'Pospuesto automáticamente por posposición del anticipo',
+            notaRechazo: undefined
+          })
+        }
+      }
+      if (onUpdate) {
+        onUpdate(viajeActualizado)
+      }
+      setShowPosponerAnticipo(false)
+      setNotaAnticipoPospuesto('')
+      onClose()
+    }
+  }
+
+  // Función para posponer liquidación (también pospone anticipo si no está pagado)
+  const handlePosponerLiquidacion = () => {
+    if (notaLiquidacionPospuesta.trim()) {
+      const viajeActualizado = {
+        ...viaje,
+        liquidacion: {
+          ...viaje.liquidacion,
+          aprobado: false,
+          status: 'Pospuesto' as const,
+          notaPospuesto: notaLiquidacionPospuesta.trim(),
+          notaRechazo: undefined
+        },
+        anticipo: {
+          ...viaje.anticipo,
+          // Solo posponer anticipo si no está pagado
+          ...(viaje.anticipo.status !== 'Pagado' && {
+            aprobado: false,
+            status: 'Pospuesto' as const,
+            notaPospuesto: 'Pospuesto automáticamente por posposición de la liquidación',
+            notaRechazo: undefined
+          })
+        }
+      }
+      if (onUpdate) {
+        onUpdate(viajeActualizado)
+      }
+      setShowPosponerLiquidacion(false)
+      setNotaLiquidacionPospuesta('')
       onClose()
     }
   }
@@ -222,6 +290,12 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
               >
                 Rechazar
               </button>
+              <button
+                onClick={() => setShowPosponerAnticipo(true)}
+                className="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700"
+              >
+                Posponer
+              </button>
             </div>
           )}
         </div>
@@ -271,6 +345,12 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
                 className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
               >
                 Rechazar
+              </button>
+              <button
+                onClick={() => setShowPosponerLiquidacion(true)}
+                className="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700"
+              >
+                Posponer
               </button>
             </div>
           )}
@@ -327,6 +407,72 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
                 </button>
                 <button
                   onClick={() => setShowNotaLiquidacion(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para posponer anticipo */}
+        {showPosponerAnticipo && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">Posponer Anticipo</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                Al posponer el anticipo, la liquidación también se pospondrá automáticamente (a menos que ya esté pagada).
+              </p>
+              <textarea
+                value={notaAnticipoPospuesto}
+                onChange={(e) => setNotaAnticipoPospuesto(e.target.value)}
+                placeholder="Ingresa el motivo de la posposición..."
+                className="w-full p-3 border border-gray-300 rounded-lg resize-none"
+                rows={4}
+              />
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={handlePosponerAnticipo}
+                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                >
+                  Confirmar Posposición
+                </button>
+                <button
+                  onClick={() => setShowPosponerAnticipo(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para posponer liquidación */}
+        {showPosponerLiquidacion && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">Posponer Liquidación</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                Al posponer la liquidación, el anticipo también se pospondrá automáticamente (a menos que ya esté pagado).
+              </p>
+              <textarea
+                value={notaLiquidacionPospuesta}
+                onChange={(e) => setNotaLiquidacionPospuesta(e.target.value)}
+                placeholder="Ingresa el motivo de la posposición..."
+                className="w-full p-3 border border-gray-300 rounded-lg resize-none"
+                rows={4}
+              />
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={handlePosponerLiquidacion}
+                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                >
+                  Confirmar Posposición
+                </button>
+                <button
+                  onClick={() => setShowPosponerLiquidacion(false)}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
                 >
                   Cancelar
