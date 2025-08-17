@@ -77,7 +77,7 @@ export function seedViajes(): Viaje[] {
       statusAnticipo = 'Rechazado'
       anticipoAprobado = false
     } else if (Math.random() < 0.3) {
-      // 30% de anticipos pagados
+      // 30% de anticipos pagados (solo si fueron aprobados previamente)
       statusAnticipo = 'Pagado'
       anticipoAprobado = true
     } else {
@@ -105,8 +105,8 @@ export function seedViajes(): Viaje[] {
         // 10% de liquidaciones rechazadas
         statusLiquidacion = 'Rechazado'
         liquidacionAprobada = false
-      } else if (Math.random() < 0.3) {
-        // 30% de liquidaciones pagadas
+      } else if (Math.random() < 0.3 && statusAnticipo === 'Pagado') {
+        // 30% de liquidaciones pagadas (solo si el anticipo está pagado)
         statusLiquidacion = 'Pagado'
         liquidacionAprobada = true
       } else {

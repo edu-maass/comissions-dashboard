@@ -158,12 +158,14 @@ export default function CommissionsTable({ data, onRowOpen }:{ data:Viaje[]; onR
         const viaje = info.row.original
         if (viaje.anticipo.status === 'N/A' || viaje.anticipo.status === 'Pagado' || viaje.anticipo.status === 'Pospuesto') {
           return <span className="text-gray-400 text-sm">No aplica</span>
-        } else if (viaje.anticipo.aprobado) {
+        } else if (viaje.anticipo.status === 'Aprobado') {
           return <span className="text-green-600 text-sm">✓ Aprobado</span>
         } else if (viaje.anticipo.status === 'Rechazado') {
           return <span className="text-red-600 text-sm">✗ Rechazado</span>
-        } else {
+        } else if (viaje.anticipo.status === 'Pendiente') {
           return <span className="text-yellow-600 text-sm">Pendiente</span>
+        } else {
+          return <span className="text-gray-400 text-sm">No aplica</span>
         }
       },
       enableSorting: true
@@ -174,12 +176,14 @@ export default function CommissionsTable({ data, onRowOpen }:{ data:Viaje[]; onR
         const viaje = info.row.original
         if (viaje.liquidacion.status === 'N/A' || viaje.liquidacion.status === 'Pagado' || viaje.liquidacion.status === 'Pospuesto') {
           return <span className="text-gray-400 text-sm">No aplica</span>
-        } else if (viaje.liquidacion.aprobado) {
+        } else if (viaje.liquidacion.status === 'Aprobado') {
           return <span className="text-green-600 text-sm">✓ Aprobado</span>
         } else if (viaje.liquidacion.status === 'Rechazado') {
           return <span className="text-red-600 text-sm">✗ Rechazado</span>
-        } else {
+        } else if (viaje.liquidacion.status === 'Pendiente') {
           return <span className="text-yellow-600 text-sm">Pendiente</span>
+        } else {
+          return <span className="text-gray-400 text-sm">No aplica</span>
         }
       },
       enableSorting: true

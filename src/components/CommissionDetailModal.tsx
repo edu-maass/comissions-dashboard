@@ -22,6 +22,7 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
       anticipo: {
         ...viaje.anticipo,
         aprobado: true,
+        status: 'Aprobado' as const,
         notaRechazo: undefined
       }
     }
@@ -57,6 +58,7 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
       liquidacion: {
         ...viaje.liquidacion,
         aprobado: true,
+        status: 'Aprobado' as const,
         notaRechazo: undefined
       }
     }
@@ -185,7 +187,7 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
               <span className="text-purple-600 text-sm">Pospuesto por Admin</span>
             ) : viaje.anticipo.status === 'Pagado' ? (
               <span className="text-blue-600 text-sm">Pagado</span>
-            ) : viaje.anticipo.aprobado ? (
+            ) : viaje.anticipo.status === 'Aprobado' ? (
               <span className="text-green-600 text-sm">✓ Aprobado</span>
             ) : viaje.anticipo.status === 'Rechazado' ? (
               <span className="text-red-600 text-sm">✗ Rechazado</span>
@@ -235,7 +237,7 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
               <span className="text-purple-600 text-sm">Pospuesto por Admin</span>
             ) : viaje.liquidacion.status === 'Pagado' ? (
               <span className="text-blue-600 text-sm">Pagado</span>
-            ) : viaje.liquidacion.aprobado ? (
+            ) : viaje.liquidacion.status === 'Aprobado' ? (
               <span className="text-green-600 text-sm">✓ Aprobado</span>
             ) : viaje.liquidacion.status === 'Rechazado' ? (
               <span className="text-red-600 text-sm">✗ Rechazado</span>
