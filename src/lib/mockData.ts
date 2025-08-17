@@ -72,13 +72,15 @@ export function seedViajes(): Viaje[] {
     let notaLiquidacionPospuesta: string | undefined
     
     // Determinar status del anticipo
+    const fechaVentaYaPaso = fechaVenta < ahora
+    
     if (Math.random() < 0.05) {
       // 5% de viajes pospuestos por admin
       statusAnticipo = 'Pospuesto'
       anticipoAprobado = false
       notaAnticipoPospuesto = ['Falta documentación', 'Esperando confirmación del cliente', 'Problemas de presupuesto'][Math.floor(Math.random() * 3)]
-    } else if (Math.random() < 0.1) {
-      // 10% de viajes con N/A (fecha de anticipo no llegó)
+    } else if (Math.random() < 0.1 && !fechaVentaYaPaso) {
+      // 10% de viajes con N/A (fecha de anticipo no llegó) - SOLO si la venta NO ha pasado
       statusAnticipo = 'N/A'
       anticipoAprobado = false
     } else if (Math.random() < 0.2) {
@@ -106,8 +108,8 @@ export function seedViajes(): Viaje[] {
         statusLiquidacion = 'Pospuesto'
         liquidacionAprobada = false
         notaLiquidacionPospuesta = ['Esperando facturación', 'Problemas de conciliación', 'Documentación incompleta'][Math.floor(Math.random() * 3)]
-      } else if (Math.random() < 0.1) {
-        // 10% de liquidaciones con N/A (fecha no llegó)
+      } else if (Math.random() < 0.1 && !fechaVentaYaPaso) {
+        // 10% de liquidaciones con N/A (fecha no llegó) - SOLO si la venta NO ha pasado
         statusLiquidacion = 'N/A'
         liquidacionAprobada = false
       } else if (Math.random() < 0.2) {
@@ -156,10 +158,9 @@ export function seedViajes(): Viaje[] {
     
     const comision5SPagada = comision5S > 0 ? comision5S * (Math.random() > 0.5 ? 1 : 0) : 0
     
-    // Calcular porPagar: solo anticipos y liquidaciones aprobados
-    const anticiposAprobados = anticipoAprobado ? anticipoMonto : 0
-    const liquidacionesAprobadas = liquidacionAprobada ? liquidacionMonto : 0
-    const porPagar = anticiposAprobados + liquidacionesAprobadas
+    // Calcular por pagar - solo anticipos y liquidaciones APROBADOS (no pagados)
+    const porPagar = (statusAnticipo === 'Aprobado' ? anticipoMonto : 0) + 
+                     (statusLiquidacion === 'Aprobado' ? liquidacionMonto : 0)
     
     // Asegurar que Lisa Brissac sea el especialista para ~40% de los viajes
     const especialista = Math.random() < 0.4 ? 'Lisa Brissac' : especialistas[Math.floor(Math.random() * especialistas.length)]
@@ -310,8 +311,15 @@ export function getBonoE(mes: number, anio: number, user?: Usuario, filtroEspeci
   const sumaUtilidadCotizada = inRange.reduce((sum, v) => sum + v.utilidadCotizada, 0)
   const sumaAnticipos = inRange.reduce((sum, v) => sum + v.anticipo.monto, 0)
   const numeroViajesOperados = inRange.filter(v => v.utilidadReal !== null).length
-  const sumaUtilidadReal = inRange.reduce((sum, v) => sum + v.utilidadReal, 0)
+  const sumaUtilidadReal = inRange.reduce((sum, v) => sum + (v.utilidadReal || 0), 0)
   const sumaLiquidaciones = inRange.reduce((sum, v) => sum + v.liquidacion.monto, 0)
+  
+  // Calcular por pagar - solo anticipos y liquidaciones APROBADOS
+  const porPagar = inRange.reduce((sum, v) => {
+    const anticipoAprobado = v.anticipo.status === 'Aprobado' ? v.anticipo.monto : 0
+    const liquidacionAprobada = v.liquidacion.status === 'Aprobado' ? v.liquidacion.monto : 0
+    return sum + anticipoAprobado + liquidacionAprobada
+  }, 0)
   
   return {
     numeroViajesVendidos,
@@ -319,7 +327,8 @@ export function getBonoE(mes: number, anio: number, user?: Usuario, filtroEspeci
     sumaAnticipos,
     numeroViajesOperados,
     sumaUtilidadReal,
-    sumaLiquidaciones
+    sumaLiquidaciones,
+    porPagar
   }
 }
 

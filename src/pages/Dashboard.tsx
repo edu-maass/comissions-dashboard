@@ -371,9 +371,16 @@ export default function Dashboard() {
     const numeroViajesVendidos = viajes.length
     const sumaUtilidadCotizada = viajes.reduce((sum, v) => sum + v.utilidadCotizada, 0)
     const sumaAnticipos = viajes.reduce((sum, v) => sum + v.anticipo.monto, 0)
-    const numeroViajesOperados = viajes.filter(v => v.utilidadReal > 0).length
-    const sumaUtilidadReal = viajes.reduce((sum, v) => sum + v.utilidadReal, 0)
+    const numeroViajesOperados = viajes.filter(v => v.utilidadReal !== null).length
+    const sumaUtilidadReal = viajes.reduce((sum, v) => sum + (v.utilidadReal || 0), 0)
     const sumaLiquidaciones = viajes.reduce((sum, v) => sum + v.liquidacion.monto, 0)
+    
+    // Calcular por pagar - solo anticipos y liquidaciones APROBADOS
+    const porPagar = viajes.reduce((sum, v) => {
+      const anticipoAprobado = v.anticipo.status === 'Aprobado' ? v.anticipo.monto : 0
+      const liquidacionAprobada = v.liquidacion.status === 'Aprobado' ? v.liquidacion.monto : 0
+      return sum + anticipoAprobado + liquidacionAprobada
+    }, 0)
     
     return {
       numeroViajesVendidos,
@@ -381,7 +388,8 @@ export default function Dashboard() {
       sumaAnticipos,
       numeroViajesOperados,
       sumaUtilidadReal,
-      sumaLiquidaciones
+      sumaLiquidaciones,
+      porPagar
     }
   }
 

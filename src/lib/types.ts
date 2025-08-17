@@ -90,6 +90,7 @@ export type BonoE = {
   numeroViajesOperados: number
   sumaUtilidadReal: number
   sumaLiquidaciones: number
+  porPagar: number
 }
 
 // Bono 5S-E - Reviews
