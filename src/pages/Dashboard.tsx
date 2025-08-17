@@ -441,13 +441,14 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard de Comisiones</h1>
-          <p className="text-sm text-gray-600">Bienvenido, {user?.nombre}. Filtra por período para ver tus comisiones.</p>
-          {allViajes.length > 0 && (
-            <p className="text-xs text-green-600 mt-1">✅ {allViajes.length} viajes cargados desde datos mock</p>
-          )}
+          <h2 className="text-2xl font-bold text-gray-900">Dashboard de Comisiones</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Período: {periodo.mes === 8 ? 'AGOSTO' : 'OTRO MES'} {periodo.anio} 
+            | Viajes mostrados: {filteredViajes.length} 
+            | Total disponible: {allViajes.length}
+          </p>
         </div>
         <MonthPicker value={periodo} onChange={handlePeriodoChange} />
       </div>
