@@ -492,7 +492,8 @@ export default function Dashboard() {
     { title: 'Total Anticipos (MXN)', value: fmtMXN(highlights.sumaComisionAnticipos), subtitle: `${highlights.numeroViajesVendidos} viajes vendidos` },
     { title: 'Total Liquidaciones (MXN)', value: fmtMXN(highlights.sumaComisionLiquidaciones), subtitle: `${highlights.numeroViajesOperados} viajes operados` },
     { title: 'Total Comisión 5S (MXN)', value: fmtMXN(highlights.sumaComision5S), subtitle: `${highlights.numeroReviews} reviews` },
-    { title: 'Total General (MXN)', value: fmtMXN(highlights.totalComisiones), subtitle: 'Suma de todos los conceptos' },
+    { title: 'Bono Manager (MXN)', value: bonoManager ? fmtMXN(bonoManager.sumaComisionManager) : 'N/A', subtitle: `${bonoManager ? bonoManager.numeroViajesOperados : 0} viajes operados` },
+    { title: 'Total General (MXN)', value: highlights && bonoManager ? fmtMXN(highlights.totalComisiones + bonoManager.sumaComisionManager) : 'N/A', subtitle: 'Suma de todos los conceptos' },
   ] : []
 
   // Datos para gráficos
@@ -521,13 +522,14 @@ export default function Dashboard() {
   }, [bono5SE])
 
   const pieChartData = React.useMemo(() => {
-    if (!highlights) return []
+    if (!highlights || !bonoManager) return []
     return [
       { name: 'Anticipos', value: highlights.sumaComisionAnticipos, color: '#3B82F6' },
       { name: 'Liquidaciones', value: highlights.sumaComisionLiquidaciones, color: '#10B981' },
       { name: '5S Reviews', value: highlights.sumaComision5S, color: '#F59E0B' },
+      { name: 'Bono Manager', value: bonoManager.sumaComisionManager, color: '#8B5CF6' },
     ]
-  }, [highlights])
+  }, [highlights, bonoManager])
 
   return (
     <div className="space-y-8">
@@ -561,7 +563,7 @@ export default function Dashboard() {
           {/* Highlights Section - Resumen del Período */}
           <section className="card p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Resumen del Período</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mt-6">
               {kpis.map((kpi, i) => (
                 <KpiCard key={i} title={kpi.title} value={kpi.value} subtitle={kpi.subtitle} />
               ))}
@@ -834,12 +836,21 @@ export default function Dashboard() {
               <div className="h-80">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Histórico del Bono Manager</h3>
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={Array.from({ length: 12 }, (_, i) => {
-                    const d = new Date(periodo.anio, periodo.mes - 1 - (11 - i), 1)
-                    const mesLabel = d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' })
-                    const valor = Math.round(Math.random() * 5000 + 1000) // Simular datos históricos
-                    return { mes: mesLabel, bono: valor }
-                  })}>
+                  <LineChart data={useMemo(() => {
+                    // Generar datos históricos estables para el bono manager
+                    const historicoData = []
+                    for (let i = 11; i >= 0; i--) {
+                      const d = new Date(periodo.anio, periodo.mes - 1 - i, 1)
+                      const mesLabel = d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' })
+                      
+                      // Generar valor base estable con pequeña variación
+                      const baseValue = 2500 + (Math.sin(i * 0.5) * 800) + (Math.random() * 400 - 200)
+                      const valor = Math.round(Math.max(0, baseValue))
+                      
+                      historicoData.push({ mes: mesLabel, bono: valor })
+                    }
+                    return historicoData
+                  }, [periodo])}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="mes" />
                     <YAxis />

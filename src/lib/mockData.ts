@@ -66,9 +66,10 @@ export function seedViajes(): Viaje[] {
     // Lógica del Bono Manager
     // Solo aplica si NO son especialistas pero son parte del mercado gestionado
     // Para simular esto, usaremos un 20% de probabilidad
-    const aplicaBonoManager = Math.random() < 0.2 && utilidadReal !== null
+    // Ahora aplica tanto a viajes pasados como futuros
+    const aplicaBonoManager = Math.random() < 0.2
     const porcentajeBonoManager = 0.01 // 1% de la utilidad real
-    const comisionBonoManager = aplicaBonoManager ? utilidadReal * porcentajeBonoManager : 0
+    const comisionBonoManager = aplicaBonoManager && utilidadReal !== null ? utilidadReal * porcentajeBonoManager : 0
     
     // Status del Bono Manager
     let statusBonoManager: EstatusBonoManager
@@ -77,6 +78,10 @@ export function seedViajes(): Viaje[] {
     let notaBonoManagerPospuesto: string | undefined
     
     if (!aplicaBonoManager) {
+      statusBonoManager = 'N/A'
+      bonoManagerAprobado = false
+    } else if (utilidadReal === null) {
+      // Si el viaje es futuro, el bono manager no aplica aún
       statusBonoManager = 'N/A'
       bonoManagerAprobado = false
     } else {
