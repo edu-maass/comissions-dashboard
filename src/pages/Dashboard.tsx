@@ -46,7 +46,36 @@ export default function Dashboard() {
 
   // Función para actualizar un viaje
   const handleUpdateViaje = (viajeActualizado: Viaje) => {
-    setAllViajes(prev => prev.map(v => v.id === viajeActualizado.id ? viajeActualizado : v))
+    // Recalcular porPagar basado en el nuevo status
+    let nuevoPorPagar = 0
+    
+    // Si el anticipo está aprobado, incluirlo en por pagar
+    if (viajeActualizado.anticipo.status === 'Aprobado') {
+      nuevoPorPagar += viajeActualizado.anticipo.monto
+    }
+    
+    // Si la liquidación está aprobada, incluirla en por pagar
+    if (viajeActualizado.liquidacion.status === 'Aprobado') {
+      nuevoPorPagar += viajeActualizado.liquidacion.monto
+    }
+    
+    // Crear el viaje actualizado con el nuevo porPagar
+    const viajeConPorPagarActualizado = {
+      ...viajeActualizado,
+      porPagar: nuevoPorPagar
+    }
+    
+    console.log('🔄 Actualizando viaje:', {
+      id: viajeActualizado.id,
+      booking: viajeActualizado.booking,
+      anticipoStatus: viajeActualizado.anticipo.status,
+      liquidacionStatus: viajeActualizado.liquidacion.status,
+      porPagarAnterior: viajeActualizado.porPagar,
+      porPagarNuevo: nuevoPorPagar
+    })
+    
+    // Actualizar el estado con el viaje que tiene el porPagar recalculado
+    setAllViajes(prev => prev.map(v => v.id === viajeActualizado.id ? viajeConPorPagarActualizado : v))
     setDetail(null) // Cerrar el modal
   }
 
