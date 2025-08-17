@@ -7,22 +7,32 @@ export function seedViajes(): Viaje[] {
   const roles: Array<'Especialista' | 'Apoyo' | 'Reservas' | 'Seguimiento' | 'Tripbook'> = ['Especialista', 'Apoyo', 'Reservas', 'Seguimiento', 'Tripbook']
   
   for (let i = 0; i < 1500; i++) {
-    // Generar fechas entre 2024 y 2025 para tener datos para el período actual
-    const anio = Math.random() > 0.5 ? 2024 : 2025
-    const mes = Math.floor(Math.random() * 12) + 1
-    const dia = Math.floor(Math.random() * 28) + 1
+    // Generar fechas más realistas
+    const fechaVenta = new Date(2024, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1)
+    const fechaViaje = new Date(fechaVenta)
+    fechaViaje.setDate(fechaViaje.getDate() + Math.floor(Math.random() * 90) + 30) // 30-120 días después de la venta
     
-    const fechaVenta = new Date(anio, mes - 1, dia)
-    const fechaViaje = new Date(fechaVenta.getTime() + Math.random() * 365 * 24 * 60 * 60 * 1000)
+    // Asegurar que la fecha de viaje no sea en el futuro (más de 6 meses)
+    const fechaLimite = new Date()
+    fechaLimite.setMonth(fechaLimite.getMonth() + 6)
+    if (fechaViaje > fechaLimite) {
+      fechaViaje.setMonth(fechaLimite.getMonth())
+      fechaViaje.setDate(Math.floor(Math.random() * 28) + 1)
+    }
     
-    const utilidadCotizada = Math.random() * 50000 + 5000
-    const utilidadReal = Math.random() > 0.3 ? utilidadCotizada * (0.8 + Math.random() * 0.4) : 0
+    // Generar utilidad cotizada (siempre disponible)
+    const utilidadCotizada = Math.floor(Math.random() * 50000) + 10000
     
-    // Nuevos campos agregados
-    const ingresoCotizado = utilidadCotizada + (Math.random() * 100000 + 50000) // Ingreso = utilidad + costos
-    const ingresoReal = utilidadReal > 0 ? ingresoCotizado * (0.8 + Math.random() * 0.4) : 0
+    // Generar utilidad real solo si el viaje ya pasó
+    const ahora = new Date()
+    const viajeYaPaso = fechaViaje < ahora
+    const utilidadReal = viajeYaPaso ? Math.floor(utilidadCotizada * (0.7 + Math.random() * 0.6)) : null // 70%-130% de la cotizada
+    
+    // Generar ingresos y COGS
+    const ingresoCotizado = utilidadCotizada + Math.floor(Math.random() * 100000) + 50000
+    const ingresoReal = viajeYaPaso ? Math.floor(ingresoCotizado * (0.8 + Math.random() * 0.4)) : null
     const cogsCotizados = ingresoCotizado - utilidadCotizada
-    const cogsReales = ingresoReal > 0 ? ingresoReal - utilidadReal : 0
+    const cogsReales = viajeYaPaso ? (ingresoReal || 0) - (utilidadReal || 0) : null
     
     // Compradores disponibles
     const compradores: Array<'Evaneos Fr' | 'Kim kim' | 'Travel Local' | 'Evaneos It' | 'Tourlane'> = [
@@ -41,8 +51,7 @@ export function seedViajes(): Viaje[] {
     }
     
     // Determinar esquema basado en fecha de venta
-    const fechaLimite = new Date('2025-09-01')
-    const esEsquemaNuevo = fechaVenta >= fechaLimite
+    const esEsquemaNuevo = fechaVenta >= new Date('2025-09-01')
     
     // Porcentajes según esquema
     const anticipoPorcentaje = esEsquemaNuevo ? 0.04 : 0.045 // 4% nuevo, 4.5% anterior
@@ -87,7 +96,7 @@ export function seedViajes(): Viaje[] {
     }
     
     // Determinar status de la liquidación
-    if (utilidadReal > 0) {
+    if (utilidadReal !== null) {
       if (Math.random() < 0.05) {
         // 5% de liquidaciones pospuestas por admin
         statusLiquidacion = 'Pospuesto'
@@ -121,7 +130,7 @@ export function seedViajes(): Viaje[] {
     }
     
     // Liquidación = Comisión Total - Anticipo
-    const comisionTotal = utilidadReal > 0 ? utilidadReal * liquidacionPorcentaje : 0
+    const comisionTotal = utilidadReal !== null ? utilidadReal * liquidacionPorcentaje : 0
     const liquidacionMonto = Math.max(0, comisionTotal - anticipoMonto)
     
     // Lógica de 5S Reviews: $2000 por 1 review, $500 extra por cada review adicional
@@ -265,7 +274,7 @@ export function getHighlightsPeriodo(mes: number, anio: number, user?: Usuario, 
   const sumaComisionAnticipos = inRange.reduce((sum, v) => sum + (v.anticipo.status === 'Pagado' ? v.anticipo.monto : 0), 0)
   const numeroViajesVendidos = inRange.length
   const sumaComisionLiquidaciones = inRange.reduce((sum, v) => sum + (v.liquidacion.status === 'Pagado' ? v.liquidacion.monto : 0), 0)
-  const numeroViajesOperados = inRange.filter(v => v.utilidadReal > 0).length
+  const numeroViajesOperados = inRange.filter(v => v.utilidadReal !== null).length
   const sumaComision5S = inRange.reduce((sum, v) => sum + v.reviews5S.comision, 0)
   const numeroReviews = inRange.reduce((sum, v) => sum + v.reviews5S.cantidad, 0)
   const totalComisiones = sumaComisionAnticipos + sumaComisionLiquidaciones + sumaComision5S
@@ -296,7 +305,7 @@ export function getBonoE(mes: number, anio: number, user?: Usuario, filtroEspeci
   const numeroViajesVendidos = inRange.length
   const sumaUtilidadCotizada = inRange.reduce((sum, v) => sum + v.utilidadCotizada, 0)
   const sumaAnticipos = inRange.reduce((sum, v) => sum + v.anticipo.monto, 0)
-  const numeroViajesOperados = inRange.filter(v => v.utilidadReal > 0).length
+  const numeroViajesOperados = inRange.filter(v => v.utilidadReal !== null).length
   const sumaUtilidadReal = inRange.reduce((sum, v) => sum + v.utilidadReal, 0)
   const sumaLiquidaciones = inRange.reduce((sum, v) => sum + v.liquidacion.monto, 0)
   

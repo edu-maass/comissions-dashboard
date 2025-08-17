@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSession } from '../state/useSession'
 import { generateHistoricoMensual, seedViajes } from '../lib/mockData'
 import { fmtMXN } from '../lib/format'
@@ -14,6 +14,7 @@ export default function Historic() {
   const [loading, setLoading] = useState(false)
   const [detail, setDetail] = useState<Viaje | null>(null)
   const [allViajes, setAllViajes] = useState<Viaje[]>([])
+  const [fechaSeleccionada, setFechaSeleccionada] = useState<string>('')
 
   useEffect(() => {
     if (!user) return
@@ -36,18 +37,32 @@ export default function Historic() {
   }
 
   // Calcular KPIs del período actual
-  const calcularKPIs = () => {
-    if (allViajes.length === 0) return { anticipos: 0, viajesVendidos: 0, liquidaciones: 0, viajesOperados: 0 }
-    
-    const anticipos = allViajes.reduce((sum, v) => sum + (v.anticipo.status === 'Pagado' ? v.anticipo.monto : 0), 0)
-    const viajesVendidos = allViajes.length
-    const liquidaciones = allViajes.reduce((sum, v) => sum + (v.liquidacion.status === 'Pagado' ? v.liquidacion.monto : 0), 0)
-    const viajesOperados = allViajes.filter(v => v.utilidadReal > 0).length
-    
-    return { anticipos, viajesVendidos, liquidaciones, viajesOperados }
-  }
+  const calcularKPIs = useMemo(() => {
+    const viajesFiltrados = allViajes.filter(v => {
+      const fechaViaje = new Date(v.fechaViaje)
+      const fechaVenta = new Date(v.fechaVenta)
+      const mesSeleccionado = new Date(fechaSeleccionada)
+      
+      return fechaViaje.getMonth() === mesSeleccionado.getMonth() && 
+             fechaViaje.getFullYear() === mesSeleccionado.getFullYear() ||
+             fechaVenta.getMonth() === mesSeleccionado.getMonth() && 
+             fechaVenta.getFullYear() === mesSeleccionado.getFullYear()
+    })
 
-  const kpis = calcularKPIs()
+    const anticipos = viajesFiltrados.reduce((sum, v) => sum + (v.anticipo.status === 'Pagado' ? v.anticipo.monto : 0), 0)
+    const liquidaciones = viajesFiltrados.reduce((sum, v) => sum + (v.liquidacion.status === 'Pagado' ? v.liquidacion.monto : 0), 0)
+    const numeroViajesVendidos = viajesFiltrados.length
+    const numeroViajesOperados = viajesFiltrados.filter(v => v.utilidadReal !== null).length
+
+    return {
+      anticipos,
+      liquidaciones,
+      numeroViajesVendidos,
+      numeroViajesOperados
+    }
+  }, [allViajes, fechaSeleccionada])
+
+  const kpis = calcularKPIs
 
   if (loading) return <div className="text-center py-8">Cargando histórico...</div>
   

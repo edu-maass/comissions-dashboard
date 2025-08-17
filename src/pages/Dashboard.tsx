@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useSession } from '../state/useSession'
 import type { Viaje, HighlightsPeriodo, BonoE, Bono5SE, Filters } from '../lib/types'
 import CommissionDetailModal from '../components/CommissionDetailModal'
@@ -155,12 +155,53 @@ export default function Dashboard() {
     loadData()
   }, [])
 
-  // Aplicar filtros a los datos
-  const filteredViajes = React.useMemo(() => {
+  // Filtrar viajes por período seleccionado
+  const filteredViajes = useMemo(() => {
+    console.log('🔄 Filtrando viajes...')
+    console.log('🔄 allViajes.length:', allViajes.length)
+    console.log('🔄 periodo:', periodo)
+    
+    if (allViajes.length === 0) {
+      console.log('⚠️ No hay viajes para filtrar')
+      return []
+    }
+    
     let filtered = allViajes
     
-    console.log(`🔍 Filtrado inicial: ${filtered.length} viajes`)
-    console.log(`🔍 Período seleccionado: ${periodo.mes}/${periodo.anio}`)
+    // Filtro por período: solo viajes con fecha de viaje O fecha de venta en el mes seleccionado
+    const filteredByPeriod = filtered.filter(v => {
+      const fechaViaje = new Date(v.fechaViaje)
+      const fechaVenta = new Date(v.fechaVenta)
+      const mesSeleccionado = new Date(periodo.anio, periodo.mes - 1, 1)
+      
+      // Verificar si la fecha de viaje o fecha de venta está en el mes seleccionado
+      const viajeEnMes = fechaViaje.getMonth() === mesSeleccionado.getMonth() && 
+                         fechaViaje.getFullYear() === mesSeleccionado.getFullYear()
+      const ventaEnMes = fechaVenta.getMonth() === mesSeleccionado.getMonth() && 
+                         fechaVenta.getFullYear() === mesSeleccionado.getFullYear()
+      
+      return viajeEnMes || ventaEnMes
+    })
+    
+    console.log(`🔍 Después de filtro período: ${filteredByPeriod.length} viajes`)
+    
+    if (filteredByPeriod.length === 0) {
+      console.log(`⚠️ No hay datos para ${periodo.mes}/${periodo.anio}, mostrando datos recientes`)
+      // Mostrar datos de los últimos 6 meses como fallback
+      const sixMonthsAgo = new Date()
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+      filtered = filtered.filter(v => new Date(v.fechaVenta) >= sixMonthsAgo)
+      console.log(`🔍 Después de fallback a datos recientes: ${filtered.length} viajes`)
+      
+      // Si aún no hay datos, mostrar todos los datos
+      if (filtered.length === 0) {
+        console.log('⚠️ No hay datos recientes, mostrando todos los datos disponibles')
+        filtered = allViajes
+      }
+    } else {
+      filtered = filteredByPeriod
+      console.log(`🔍 Después de filtro período: ${filtered.length} viajes`)
+    }
 
     // Filtro por especialista
     if (filters.especialista) {
@@ -185,35 +226,6 @@ export default function Dashboard() {
       filtered = filtered.filter(v => v.anticipo.status === 'Pendiente')
     } else if (filters.tipoViaje === 'liquidacion') {
       filtered = filtered.filter(v => v.liquidacion.status === 'Pendiente')
-    }
-
-    // Filtro por fecha usando el selector de período superior
-    // Si no hay filtro de período, mostrar todos los datos
-    // Si hay filtro, mostrar datos del período o datos recientes como fallback
-    if (periodo.mes && periodo.anio) {
-      const filteredByPeriod = filtered.filter(v => {
-        const fechaVenta = new Date(v.fechaVenta)
-        return fechaVenta.getMonth() + 1 === periodo.mes && fechaVenta.getFullYear() === periodo.anio
-      })
-      
-      // Si no hay datos para el período específico, mostrar datos recientes
-      if (filteredByPeriod.length === 0) {
-        console.log(`⚠️ No hay datos para ${periodo.mes}/${periodo.anio}, mostrando datos recientes`)
-        // Mostrar datos de los últimos 6 meses como fallback
-        const sixMonthsAgo = new Date()
-        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
-        filtered = filtered.filter(v => new Date(v.fechaVenta) >= sixMonthsAgo)
-        console.log(`🔍 Después de fallback a datos recientes: ${filtered.length} viajes`)
-        
-        // Si aún no hay datos, mostrar todos los datos
-        if (filtered.length === 0) {
-          console.log('⚠️ No hay datos recientes, mostrando todos los datos disponibles')
-          filtered = allViajes
-        }
-      } else {
-        filtered = filteredByPeriod
-        console.log(`🔍 Después de filtro período: ${filtered.length} viajes`)
-      }
     }
 
     // Filtro por búsqueda
