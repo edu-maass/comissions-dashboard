@@ -509,8 +509,6 @@ export default function Dashboard() {
     return months
   }, [periodo, highlights])
 
-
-
   // Datos para gráfico de Bono 5S-E
   const bono5SEChartData = React.useMemo(() => {
     if (!bono5SE) return []
@@ -520,6 +518,22 @@ export default function Dashboard() {
       { name: '3+ Reviews', value: bono5SE.viajesCon3Reviews, comision: bono5SE.comisionTotal * 0.4 },
     ]
   }, [bono5SE])
+
+  // Datos históricos estables para el gráfico del Bono Manager
+  const bonoManagerHistoricoData = React.useMemo(() => {
+    const historicoData = []
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(periodo.anio, periodo.mes - 1 - i, 1)
+      const mesLabel = d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' })
+      
+      // Generar valor base estable con pequeña variación
+      const baseValue = 2500 + (Math.sin(i * 0.5) * 800) + (Math.random() * 400 - 200)
+      const valor = Math.round(Math.max(0, baseValue))
+      
+      historicoData.push({ mes: mesLabel, bono: valor })
+    }
+    return historicoData
+  }, [periodo])
 
   const pieChartData = React.useMemo(() => {
     if (!highlights || !bonoManager) return []
@@ -836,21 +850,7 @@ export default function Dashboard() {
               <div className="h-80">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Histórico del Bono Manager</h3>
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={useMemo(() => {
-                    // Generar datos históricos estables para el bono manager
-                    const historicoData = []
-                    for (let i = 11; i >= 0; i--) {
-                      const d = new Date(periodo.anio, periodo.mes - 1 - i, 1)
-                      const mesLabel = d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' })
-                      
-                      // Generar valor base estable con pequeña variación
-                      const baseValue = 2500 + (Math.sin(i * 0.5) * 800) + (Math.random() * 400 - 200)
-                      const valor = Math.round(Math.max(0, baseValue))
-                      
-                      historicoData.push({ mes: mesLabel, bono: valor })
-                    }
-                    return historicoData
-                  }, [periodo])}>
+                  <LineChart data={bonoManagerHistoricoData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="mes" />
                     <YAxis />
