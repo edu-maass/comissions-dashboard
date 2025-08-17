@@ -88,12 +88,18 @@ export default function Dashboard() {
             anticipo: {
               porcentaje: 0.025,
               monto: 625,
-              status: 'Pagado' as const
+              status: 'Pagado' as const,
+              aprobado: true,
+              notaRechazo: undefined,
+              notaPospuesto: undefined
             },
             liquidacion: {
               porcentaje: 0.04,
               monto: 880,
-              status: 'Pagada' as const
+              status: 'Pagado' as const,
+              aprobado: true,
+              notaRechazo: undefined,
+              notaPospuesto: undefined
             },
             comisionTotal: 880,
             reviews5S: {
@@ -104,7 +110,7 @@ export default function Dashboard() {
               pagado: 300,
               porPagar: 200
             },
-            porPagar: 0
+            porPagar: 1505
           }
         ]
         
@@ -291,7 +297,7 @@ export default function Dashboard() {
   const calculateHighlights = (viajes: Viaje[]): HighlightsPeriodo => {
     const sumaComisionAnticipos = viajes.reduce((sum, v) => sum + (v.anticipo.status === 'Pagado' ? v.anticipo.monto : 0), 0)
     const numeroViajesVendidos = viajes.length
-    const sumaComisionLiquidaciones = viajes.reduce((sum, v) => sum + (v.liquidacion.status === 'Pagada' ? v.liquidacion.monto : 0), 0)
+    const sumaComisionLiquidaciones = viajes.reduce((sum, v) => sum + (v.liquidacion.status === 'Pagado' ? v.liquidacion.monto : 0), 0)
     const numeroViajesOperados = viajes.filter(v => v.utilidadReal > 0).length
     const sumaComision5S = viajes.reduce((sum, v) => sum + v.reviews5S.comision, 0)
     const numeroReviews = viajes.reduce((sum, v) => sum + v.reviews5S.cantidad, 0)

@@ -111,12 +111,18 @@ export function parseCSVToViajes(csvText: string): Viaje[] {
         anticipo: {
           porcentaje: 0.02 + Math.random() * 0.015,
           monto: utilidadCotizada * (0.02 + Math.random() * 0.015) || Math.random() * 1000 + 100,
-          status: Math.random() > 0.7 ? 'Pendiente' : 'Pagado'
+          status: Math.random() > 0.7 ? 'Pendiente' : 'Pagado',
+          aprobado: Math.random() > 0.7,
+          notaRechazo: undefined,
+          notaPospuesto: undefined
         },
         liquidacion: {
           porcentaje: 0.04 + (Math.random() > 0.5 ? 0.01 : 0),
           monto: utilidadReal * (0.04 + (Math.random() > 0.5 ? 0.01 : 0)) || Math.random() * 1000 + 100,
-          status: Math.random() > 0.6 ? 'Pendiente' : 'Pagada'
+          status: Math.random() > 0.6 ? 'Pendiente' : 'Pagado',
+          aprobado: Math.random() > 0.6,
+          notaRechazo: undefined,
+          notaPospuesto: undefined
         },
         comisionTotal: comisionTotal,
         reviews5S: {

@@ -48,7 +48,32 @@ export default function CommissionsTable({ data, onRowOpen }:{ data:Viaje[]; onR
       header: 'Status Anticipo', 
       cell: info => {
         const v = info.getValue()
-        const cl = v==='Pagado' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'
+        let cl = ''
+        let bgColor = ''
+        
+        switch(v) {
+          case 'N/A':
+            cl = 'bg-gray-100 text-gray-800 border-gray-200'
+            break
+          case 'Pendiente':
+            cl = 'bg-yellow-100 text-yellow-800 border-yellow-200'
+            break
+          case 'Aprobado':
+            cl = 'bg-green-100 text-green-800 border-green-200'
+            break
+          case 'Rechazado':
+            cl = 'bg-red-100 text-red-800 border-red-200'
+            break
+          case 'Pospuesto':
+            cl = 'bg-purple-100 text-purple-800 border-purple-200'
+            break
+          case 'Pagado':
+            cl = 'bg-blue-100 text-blue-800 border-blue-200'
+            break
+          default:
+            cl = 'bg-gray-100 text-gray-800 border-gray-200'
+        }
+        
         return <span className={`px-2 py-1 rounded-full text-xs font-medium border ${cl}`}>{v}</span>
       },
       enableSorting: true
@@ -79,10 +104,31 @@ export default function CommissionsTable({ data, onRowOpen }:{ data:Viaje[]; onR
         const status = info.getValue()
         if (!status) return <span className="text-gray-400">N/A</span>
         
-        const cl = status === 'Pagada' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'
-        const texto = status === 'Pagada' ? 'Pagada' : 'Pendiente'
+        let cl = ''
+        switch(status) {
+          case 'N/A':
+            cl = 'bg-gray-100 text-gray-800 border-gray-200'
+            break
+          case 'Pendiente':
+            cl = 'bg-yellow-100 text-yellow-800 border-yellow-200'
+            break
+          case 'Aprobado':
+            cl = 'bg-green-100 text-green-800 border-green-200'
+            break
+          case 'Rechazado':
+            cl = 'bg-red-100 text-red-800 border-red-200'
+            break
+          case 'Pospuesto':
+            cl = 'bg-purple-100 text-purple-800 border-purple-200'
+            break
+          case 'Pagado':
+            cl = 'bg-blue-100 text-blue-800 border-blue-200'
+            break
+          default:
+            cl = 'bg-gray-100 text-gray-800 border-gray-200'
+        }
         
-        return <span className={`px-2 py-1 rounded-full text-xs font-medium border ${cl}`}>{texto}</span>
+        return <span className={`px-2 py-1 rounded-full text-xs font-medium border ${cl}`}>{status}</span>
       },
       enableSorting: true
     }),
@@ -106,16 +152,34 @@ export default function CommissionsTable({ data, onRowOpen }:{ data:Viaje[]; onR
       enableSorting: true
     }),
     // Columna de aprobación de comisión
-    columnHelper.accessor('comisionAprobada', {
-      header: 'Aprobar Comisión',
+    columnHelper.accessor('anticipo.aprobado', {
+      header: 'Aprobar Anticipo',
       cell: info => {
         const viaje = info.row.original
-        if (viaje.comisionAprobada === undefined) {
-          return <span className="text-yellow-600 text-sm">Pendiente</span>
-        } else if (viaje.comisionAprobada) {
-          return <span className="text-green-600 text-sm">✓ Aprobada</span>
+        if (viaje.anticipo.status === 'N/A' || viaje.anticipo.status === 'Pagado' || viaje.anticipo.status === 'Pospuesto') {
+          return <span className="text-gray-400 text-sm">No aplica</span>
+        } else if (viaje.anticipo.aprobado) {
+          return <span className="text-green-600 text-sm">✓ Aprobado</span>
+        } else if (viaje.anticipo.status === 'Rechazado') {
+          return <span className="text-red-600 text-sm">✗ Rechazado</span>
         } else {
-          return <span className="text-red-600 text-sm">✗ Rechazada</span>
+          return <span className="text-yellow-600 text-sm">Pendiente</span>
+        }
+      },
+      enableSorting: true
+    }),
+    columnHelper.accessor('liquidacion.aprobado', {
+      header: 'Aprobar Liquidación',
+      cell: info => {
+        const viaje = info.row.original
+        if (viaje.liquidacion.status === 'N/A' || viaje.liquidacion.status === 'Pagado' || viaje.liquidacion.status === 'Pospuesto') {
+          return <span className="text-gray-400 text-sm">No aplica</span>
+        } else if (viaje.liquidacion.aprobado) {
+          return <span className="text-green-600 text-sm">✓ Aprobado</span>
+        } else if (viaje.liquidacion.status === 'Rechazado') {
+          return <span className="text-red-600 text-sm">✗ Rechazado</span>
+        } else {
+          return <span className="text-yellow-600 text-sm">Pendiente</span>
         }
       },
       enableSorting: true

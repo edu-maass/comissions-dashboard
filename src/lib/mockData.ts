@@ -50,19 +50,74 @@ export function seedViajes(): Viaje[] {
     
     const anticipoMonto = utilidadCotizada * anticipoPorcentaje
     
-    // Lógica: No puede haber anticipos pendientes con liquidación pagada
+    // Nueva lógica de status para anticipo y liquidación
     let statusAnticipo: EstatusPago
     let statusLiquidacion: EstatusPago
+    let anticipoAprobado: boolean
+    let liquidacionAprobada: boolean
+    let notaAnticipoPospuesto: string | undefined
+    let notaLiquidacionPospuesta: string | undefined
     
-    if (utilidadReal > 0) {
-      // Si hay utilidad real, la liquidación puede estar pagada
-      statusLiquidacion = Math.random() > 0.6 ? 'Pagada' : 'Pendiente'
-      // Si la liquidación está pagada, el anticipo debe estar pagado
-      statusAnticipo = statusLiquidacion === 'Pagada' ? 'Pagado' : (Math.random() > 0.7 ? 'Pendiente' : 'Pagado')
+    // Determinar status del anticipo
+    if (Math.random() < 0.05) {
+      // 5% de viajes pospuestos por admin
+      statusAnticipo = 'Pospuesto'
+      anticipoAprobado = false
+      notaAnticipoPospuesto = ['Falta documentación', 'Esperando confirmación del cliente', 'Problemas de presupuesto'][Math.floor(Math.random() * 3)]
+    } else if (Math.random() < 0.1) {
+      // 10% de viajes con N/A (fecha de anticipo no llegó)
+      statusAnticipo = 'N/A'
+      anticipoAprobado = false
+    } else if (Math.random() < 0.2) {
+      // 20% de anticipos aprobados
+      statusAnticipo = 'Aprobado'
+      anticipoAprobado = true
+    } else if (Math.random() < 0.1) {
+      // 10% de anticipos rechazados
+      statusAnticipo = 'Rechazado'
+      anticipoAprobado = false
+    } else if (Math.random() < 0.3) {
+      // 30% de anticipos pagados
+      statusAnticipo = 'Pagado'
+      anticipoAprobado = true
     } else {
-      // Si no hay utilidad real, solo anticipos
-      statusLiquidacion = 'Pendiente'
-      statusAnticipo = Math.random() > 0.7 ? 'Pendiente' : 'Pagado'
+      // 25% de anticipos pendientes
+      statusAnticipo = 'Pendiente'
+      anticipoAprobado = false
+    }
+    
+    // Determinar status de la liquidación
+    if (utilidadReal > 0) {
+      if (Math.random() < 0.05) {
+        // 5% de liquidaciones pospuestas por admin
+        statusLiquidacion = 'Pospuesto'
+        liquidacionAprobada = false
+        notaLiquidacionPospuesta = ['Esperando facturación', 'Problemas de conciliación', 'Documentación incompleta'][Math.floor(Math.random() * 3)]
+      } else if (Math.random() < 0.1) {
+        // 10% de liquidaciones con N/A (fecha no llegó)
+        statusLiquidacion = 'N/A'
+        liquidacionAprobada = false
+      } else if (Math.random() < 0.2) {
+        // 20% de liquidaciones aprobadas
+        statusLiquidacion = 'Aprobado'
+        liquidacionAprobada = true
+      } else if (Math.random() < 0.1) {
+        // 10% de liquidaciones rechazadas
+        statusLiquidacion = 'Rechazado'
+        liquidacionAprobada = false
+      } else if (Math.random() < 0.3) {
+        // 30% de liquidaciones pagadas
+        statusLiquidacion = 'Pagado'
+        liquidacionAprobada = true
+      } else {
+        // 25% de liquidaciones pendientes
+        statusLiquidacion = 'Pendiente'
+        liquidacionAprobada = false
+      }
+    } else {
+      // Si no hay utilidad real, liquidación no aplica
+      statusLiquidacion = 'N/A'
+      liquidacionAprobada = false
     }
     
     // Liquidación = Comisión Total - Anticipo
@@ -88,10 +143,10 @@ export function seedViajes(): Viaje[] {
     
     const comision5SPagada = comision5S > 0 ? comision5S * (Math.random() > 0.5 ? 1 : 0) : 0
     
-    // Calcular porPagar: anticipos pendientes + liquidaciones pendientes
-    const anticiposPendientes = statusAnticipo === 'Pendiente' ? anticipoMonto : 0
-    const liquidacionesPendientes = statusLiquidacion === 'Pendiente' ? liquidacionMonto : 0
-    const porPagar = anticiposPendientes + liquidacionesPendientes
+    // Calcular porPagar: solo anticipos y liquidaciones aprobados
+    const anticiposAprobados = anticipoAprobado ? anticipoMonto : 0
+    const liquidacionesAprobadas = liquidacionAprobada ? liquidacionMonto : 0
+    const porPagar = anticiposAprobados + liquidacionesAprobadas
     
     // Asegurar que Lisa Brissac sea el especialista para ~40% de los viajes
     const especialista = Math.random() < 0.4 ? 'Lisa Brissac' : especialistas[Math.floor(Math.random() * especialistas.length)]
@@ -121,12 +176,16 @@ export function seedViajes(): Viaje[] {
       anticipo: {
         porcentaje: anticipoPorcentaje,
         monto: anticipoMonto,
-        status: statusAnticipo
+        status: statusAnticipo,
+        aprobado: anticipoAprobado,
+        notaPospuesto: notaAnticipoPospuesto
       },
       liquidacion: {
         porcentaje: liquidacionPorcentaje,
         monto: liquidacionMonto,
-        status: statusLiquidacion
+        status: statusLiquidacion,
+        aprobado: liquidacionAprobada,
+        notaPospuesto: notaLiquidacionPospuesta
       },
       comisionTotal,
       reviews5S: {
@@ -205,7 +264,7 @@ export function getHighlightsPeriodo(mes: number, anio: number, user?: Usuario, 
   
   const sumaComisionAnticipos = inRange.reduce((sum, v) => sum + (v.anticipo.status === 'Pagado' ? v.anticipo.monto : 0), 0)
   const numeroViajesVendidos = inRange.length
-  const sumaComisionLiquidaciones = inRange.reduce((sum, v) => sum + (v.liquidacion.status === 'Pagada' ? v.liquidacion.monto : 0), 0)
+  const sumaComisionLiquidaciones = inRange.reduce((sum, v) => sum + (v.liquidacion.status === 'Pagado' ? v.liquidacion.monto : 0), 0)
   const numeroViajesOperados = inRange.filter(v => v.utilidadReal > 0).length
   const sumaComision5S = inRange.reduce((sum, v) => sum + v.reviews5S.comision, 0)
   const numeroReviews = inRange.reduce((sum, v) => sum + v.reviews5S.cantidad, 0)

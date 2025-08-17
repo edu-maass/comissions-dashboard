@@ -9,18 +9,21 @@ interface Props {
 }
 
 export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Props) {
-  const [notaComision, setNotaComision] = useState(viaje?.notaComision || '')
-  const [notaBono5S, setNotaBono5S] = useState(viaje?.notaBono5S || '')
-  const [showNotaComision, setShowNotaComision] = useState(false)
-  const [showNotaBono5S, setShowNotaBono5S] = useState(false)
+  const [notaAnticipo, setNotaAnticipo] = useState(viaje?.anticipo.notaRechazo || '')
+  const [notaLiquidacion, setNotaLiquidacion] = useState(viaje?.liquidacion.notaRechazo || '')
+  const [showNotaAnticipo, setShowNotaAnticipo] = useState(false)
+  const [showNotaLiquidacion, setShowNotaLiquidacion] = useState(false)
 
   if (!viaje) return null
 
-  const handleAprobarComision = () => {
+  const handleAprobarAnticipo = () => {
     const viajeActualizado = {
       ...viaje,
-      comisionAprobada: true,
-      notaComision: undefined
+      anticipo: {
+        ...viaje.anticipo,
+        aprobado: true,
+        notaRechazo: undefined
+      }
     }
     if (onUpdate) {
       onUpdate(viajeActualizado)
@@ -28,27 +31,34 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
     onClose()
   }
 
-  const handleRechazarComision = () => {
-    if (notaComision.trim()) {
+  const handleRechazarAnticipo = () => {
+    if (notaAnticipo.trim()) {
       const viajeActualizado = {
         ...viaje,
-        comisionAprobada: false,
-        notaComision: notaComision.trim()
+        anticipo: {
+          ...viaje.anticipo,
+          aprobado: false,
+          status: 'Rechazado' as const,
+          notaRechazo: notaAnticipo.trim()
+        }
       }
       if (onUpdate) {
         onUpdate(viajeActualizado)
       }
-      setShowNotaComision(false)
-      setNotaComision('')
+      setShowNotaAnticipo(false)
+      setNotaAnticipo('')
       onClose()
     }
   }
 
-  const handleAprobarBono5S = () => {
+  const handleAprobarLiquidacion = () => {
     const viajeActualizado = {
       ...viaje,
-      bono5SAprobado: true,
-      notaBono5S: undefined
+      liquidacion: {
+        ...viaje.liquidacion,
+        aprobado: true,
+        notaRechazo: undefined
+      }
     }
     if (onUpdate) {
       onUpdate(viajeActualizado)
@@ -56,18 +66,22 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
     onClose()
   }
 
-  const handleRechazarBono5S = () => {
-    if (notaBono5S.trim()) {
+  const handleRechazarLiquidacion = () => {
+    if (notaLiquidacion.trim()) {
       const viajeActualizado = {
         ...viaje,
-        bono5SAprobado: false,
-        notaBono5S: notaBono5S.trim()
+        liquidacion: {
+          ...viaje.liquidacion,
+          aprobado: false,
+          status: 'Rechazado' as const,
+          notaRechazo: notaLiquidacion.trim()
+        }
       }
       if (onUpdate) {
         onUpdate(viajeActualizado)
       }
-      setShowNotaBono5S(false)
-      setNotaBono5S('')
+      setShowNotaLiquidacion(false)
+      setNotaLiquidacion('')
       onClose()
     }
   }
@@ -160,36 +174,48 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
           </div>
         </div>
 
-        {/* Aprobación de Comisión */}
+        {/* Aprobación de Anticipo */}
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <h3 className="font-semibold text-gray-900 mb-3">Aprobación de Comisión</h3>
+          <h3 className="font-semibold text-gray-900 mb-3">Aprobación de Anticipo</h3>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-600">Estado:</span>
-            {viaje.comisionAprobada === undefined ? (
-              <span className="text-yellow-600 text-sm">Pendiente de revisión</span>
-            ) : viaje.comisionAprobada ? (
-              <span className="text-green-600 text-sm">✓ Aprobada</span>
+            {viaje.anticipo.status === 'N/A' ? (
+              <span className="text-gray-600 text-sm">No aplica</span>
+            ) : viaje.anticipo.status === 'Pospuesto' ? (
+              <span className="text-purple-600 text-sm">Pospuesto por Admin</span>
+            ) : viaje.anticipo.status === 'Pagado' ? (
+              <span className="text-blue-600 text-sm">Pagado</span>
+            ) : viaje.anticipo.aprobado ? (
+              <span className="text-green-600 text-sm">✓ Aprobado</span>
+            ) : viaje.anticipo.status === 'Rechazado' ? (
+              <span className="text-red-600 text-sm">✗ Rechazado</span>
             ) : (
-              <span className="text-red-600 text-sm">✗ Rechazada</span>
+              <span className="text-yellow-600 text-sm">Pendiente de revisión</span>
             )}
           </div>
           
-          {viaje.notaComision && (
+          {viaje.anticipo.notaRechazo && (
             <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-              <p className="text-sm text-red-700"><strong>Nota:</strong> {viaje.notaComision}</p>
+              <p className="text-sm text-red-700"><strong>Nota de rechazo:</strong> {viaje.anticipo.notaRechazo}</p>
             </div>
           )}
 
-          {viaje.comisionAprobada === undefined && (
+          {viaje.anticipo.notaPospuesto && (
+            <div className="mt-2 p-2 bg-purple-50 border border-purple-200 rounded">
+              <p className="text-sm text-purple-700"><strong>Nota de posposición:</strong> {viaje.anticipo.notaPospuesto}</p>
+            </div>
+          )}
+
+          {viaje.anticipo.status === 'Pendiente' && (
             <div className="mt-3 flex gap-2">
               <button
-                onClick={handleAprobarComision}
+                onClick={handleAprobarAnticipo}
                 className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
               >
                 Aprobar
               </button>
               <button
-                onClick={() => setShowNotaComision(true)}
+                onClick={() => setShowNotaAnticipo(true)}
                 className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
               >
                 Rechazar
@@ -198,67 +224,77 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
           )}
         </div>
 
-        {/* Aprobación de Bono 5S */}
-        {viaje.reviews5S.cantidad > 0 && (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-semibold text-gray-900 mb-3">Aprobación de Bono 5S</h3>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600">Estado:</span>
-              {viaje.bono5SAprobado === undefined ? (
-                <span className="text-yellow-600 text-sm">Pendiente de revisión</span>
-              ) : viaje.bono5SAprobado ? (
-                <span className="text-green-600 text-sm">✓ Aprobado</span>
-              ) : (
-                <span className="text-red-600 text-sm">✗ Rechazado</span>
-              )}
-            </div>
-            
-            {viaje.notaBono5S && (
-              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-                <p className="text-sm text-red-700"><strong>Nota:</strong> {viaje.notaBono5S}</p>
-              </div>
-            )}
-
-            {viaje.bono5SAprobado === undefined && (
-              <div className="mt-3 flex gap-2">
-                <button
-                  onClick={handleAprobarBono5S}
-                  className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                >
-                  Aprobar
-                </button>
-                <button
-                  onClick={() => setShowNotaBono5S(true)}
-                  className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
-                >
-                  Rechazar
-                </button>
-              </div>
+        {/* Aprobación de Liquidación */}
+        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+          <h3 className="font-semibold text-gray-900 mb-3">Aprobación de Liquidación</h3>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-600">Estado:</span>
+            {viaje.liquidacion.status === 'N/A' ? (
+              <span className="text-gray-600 text-sm">No aplica</span>
+            ) : viaje.liquidacion.status === 'Pospuesto' ? (
+              <span className="text-purple-600 text-sm">Pospuesto por Admin</span>
+            ) : viaje.liquidacion.status === 'Pagado' ? (
+              <span className="text-blue-600 text-sm">Pagado</span>
+            ) : viaje.liquidacion.aprobado ? (
+              <span className="text-green-600 text-sm">✓ Aprobado</span>
+            ) : viaje.liquidacion.status === 'Rechazado' ? (
+              <span className="text-red-600 text-sm">✗ Rechazado</span>
+            ) : (
+              <span className="text-yellow-600 text-sm">Pendiente de revisión</span>
             )}
           </div>
-        )}
+          
+          {viaje.liquidacion.notaRechazo && (
+            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+              <p className="text-sm text-red-700"><strong>Nota de rechazo:</strong> {viaje.liquidacion.notaRechazo}</p>
+            </div>
+          )}
+
+          {viaje.liquidacion.notaPospuesto && (
+            <div className="mt-2 p-2 bg-purple-50 border border-purple-200 rounded">
+              <p className="text-sm text-purple-700"><strong>Nota de posposición:</strong> {viaje.liquidacion.notaPospuesto}</p>
+            </div>
+          )}
+
+          {viaje.liquidacion.status === 'Pendiente' && (
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={handleAprobarLiquidacion}
+                className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+              >
+                Aprobar
+              </button>
+              <button
+                onClick={() => setShowNotaLiquidacion(true)}
+                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+              >
+                Rechazar
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Modal para nota de comisión */}
-        {showNotaComision && (
+        {showNotaAnticipo && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
               <h3 className="text-lg font-semibold mb-4">Motivo del Rechazo</h3>
               <textarea
-                value={notaComision}
-                onChange={(e) => setNotaComision(e.target.value)}
+                value={notaAnticipo}
+                onChange={(e) => setNotaAnticipo(e.target.value)}
                 placeholder="Ingresa el motivo del rechazo..."
                 className="w-full p-3 border border-gray-300 rounded-lg resize-none"
                 rows={4}
               />
               <div className="flex gap-2 mt-4">
                 <button
-                  onClick={handleRechazarComision}
+                  onClick={handleRechazarAnticipo}
                   className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                 >
                   Confirmar Rechazo
                 </button>
                 <button
-                  onClick={() => setShowNotaComision(false)}
+                  onClick={() => setShowNotaAnticipo(false)}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
                 >
                   Cancelar
@@ -269,26 +305,26 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
         )}
 
         {/* Modal para nota de bono 5S */}
-        {showNotaBono5S && (
+        {showNotaLiquidacion && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold mb-4">Motivo del Rechazo del Bono 5S</h3>
+              <h3 className="text-lg font-semibold mb-4">Motivo del Rechazo de la Liquidación</h3>
               <textarea
-                value={notaBono5S}
-                onChange={(e) => setNotaBono5S(e.target.value)}
+                value={notaLiquidacion}
+                onChange={(e) => setNotaLiquidacion(e.target.value)}
                 placeholder="Ingresa el motivo del rechazo..."
                 className="w-full p-3 border border-gray-300 rounded-lg resize-none"
                 rows={4}
               />
               <div className="flex gap-2 mt-4">
                 <button
-                  onClick={handleRechazarBono5S}
+                  onClick={handleRechazarLiquidacion}
                   className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                 >
                   Confirmar Rechazo
                 </button>
                 <button
-                  onClick={() => setShowNotaBono5S(false)}
+                  onClick={() => setShowNotaLiquidacion(false)}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
                 >
                   Cancelar

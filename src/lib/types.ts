@@ -7,7 +7,7 @@ export type Usuario = {
 }
 
 // Estados de pago
-export type EstatusPago = 'Pagado' | 'Pendiente' | 'Pagada'
+export type EstatusPago = 'N/A' | 'Pendiente' | 'Aprobado' | 'Rechazado' | 'Pospuesto' | 'Pagado'
 
 // Estructura de un viaje según el CSV
 export type Viaje = {
@@ -41,11 +41,17 @@ export type Viaje = {
     porcentaje: number
     monto: number
     status: EstatusPago
+    aprobado?: boolean
+    notaRechazo?: string
+    notaPospuesto?: string
   }
   liquidacion: {
     porcentaje: number
     monto: number
     status: EstatusPago
+    aprobado?: boolean
+    notaRechazo?: string
+    notaPospuesto?: string
   }
   comisionTotal: number
   reviews5S: {
@@ -58,11 +64,11 @@ export type Viaje = {
     porPagar: number
   }
   porPagar: number
-  // Campos de aprobación
-  comisionAprobada?: boolean
-  notaComision?: string
-  bono5SAprobado?: boolean
-  notaBono5S?: string
+  // Campos de aprobación (removidos del nivel principal)
+  // comisionAprobada?: boolean
+  // notaComision?: string
+  // bono5SAprobado?: boolean
+  // notaBono5S?: string
 }
 
 // Resumen del período (Highlights)

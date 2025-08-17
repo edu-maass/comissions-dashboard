@@ -41,7 +41,7 @@ export default function Historic() {
     
     const anticipos = allViajes.reduce((sum, v) => sum + (v.anticipo.status === 'Pagado' ? v.anticipo.monto : 0), 0)
     const viajesVendidos = allViajes.length
-    const liquidaciones = allViajes.reduce((sum, v) => sum + (v.liquidacion.status === 'Pagada' ? v.liquidacion.monto : 0), 0)
+    const liquidaciones = allViajes.reduce((sum, v) => sum + (v.liquidacion.status === 'Pagado' ? v.liquidacion.monto : 0), 0)
     const viajesOperados = allViajes.filter(v => v.utilidadReal > 0).length
     
     return { anticipos, viajesVendidos, liquidaciones, viajesOperados }

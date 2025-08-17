@@ -73,23 +73,22 @@ export default function Reviews5STable({ data, onRowOpen }: Reviews5STableProps)
       cell: info => fmtMXN(info.getValue()),
       enableSorting: true
     }),
-    columnHelper.accessor('reviews5S.porPagar', { 
-      header: 'Comisión por Pagar', 
+    columnHelper.accessor('porPagar', { 
+      header: 'Por Pagar', 
       cell: info => <span className="font-semibold">{fmtMXN(info.getValue())}</span>,
       enableSorting: true
     }),
-    // Columna de aprobación de bono 5S
-    columnHelper.accessor('bono5SAprobado', {
-      header: 'Aprobar Bono 5S',
+    columnHelper.accessor('fechaVenta', { 
+      header: 'Bono', 
       cell: info => {
-        const viaje = info.row.original
-        if (viaje.bono5SAprobado === undefined) {
-          return <span className="text-yellow-600 text-sm">Pendiente</span>
-        } else if (viaje.bono5SAprobado) {
-          return <span className="text-green-600 text-sm">✓ Aprobado</span>
-        } else {
-          return <span className="text-red-600 text-sm">✗ Rechazado</span>
-        }
+        const fechaVenta = new Date(info.getValue())
+        const fechaLimite = new Date('2025-09-01')
+        const esEsquemaNuevo = fechaVenta >= fechaLimite
+        
+        const cl = esEsquemaNuevo ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-purple-100 text-purple-800 border-purple-200'
+        const texto = esEsquemaNuevo ? 'Nuevo' : 'Anterior'
+        
+        return <span className={`px-2 py-1 rounded-full text-xs font-medium border ${cl}`}>{texto}</span>
       },
       enableSorting: true
     }),
