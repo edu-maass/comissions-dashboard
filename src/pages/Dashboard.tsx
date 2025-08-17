@@ -183,12 +183,13 @@ export default function Dashboard() {
       const fechaViaje = new Date(v.fechaViaje)
       const fechaVenta = new Date(v.fechaVenta)
       
-      // Debug: mostrar fechas del viaje
-      if (v.id === 'test_1') {
-        console.log('🔍 Viaje test_1:', {
+      // Debug: mostrar fechas del viaje para los primeros 3 viajes
+      if (filtered.indexOf(v) < 3) {
+        console.log(`🔍 Viaje ${v.id}:`, {
           id: v.id,
-          fechaViaje: fechaViaje.toISOString(),
-          fechaVenta: fechaVenta.toISOString(),
+          booking: v.booking,
+          fechaViaje: fechaViaje.toLocaleDateString('es-MX'),
+          fechaVenta: fechaVenta.toLocaleDateString('es-MX'),
           periodo: periodo,
           mesSeleccionado: `${periodo.mes}/${periodo.anio}`
         })
@@ -202,11 +203,14 @@ export default function Dashboard() {
       
       const incluir = viajeEnMes || ventaEnMes
       
-      if (v.id === 'test_1') {
-        console.log('🔍 Resultado filtro:', {
+      if (filtered.indexOf(v) < 3) {
+        console.log(`🔍 Resultado filtro para ${v.id}:`, {
           viajeEnMes,
           ventaEnMes,
-          incluir
+          incluir,
+          fechaViajeMes: fechaViaje.getMonth() + 1,
+          fechaVentaMes: fechaVenta.getMonth() + 1,
+          periodoMes: periodo.mes
         })
       }
       

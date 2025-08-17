@@ -7,8 +7,12 @@ export function seedViajes(): Viaje[] {
   const roles: Array<'Especialista' | 'Apoyo' | 'Reservas' | 'Seguimiento' | 'Tripbook'> = ['Especialista', 'Apoyo', 'Reservas', 'Seguimiento', 'Tripbook']
   
   for (let i = 0; i < 1500; i++) {
-    // Generar fechas más realistas
-    const fechaVenta = new Date(2024, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1)
+    // Generar fechas más realistas - incluir tanto 2024 como 2025
+    const anio = Math.random() > 0.3 ? 2024 : 2025 // 70% 2024, 30% 2025
+    const mes = Math.floor(Math.random() * 12) + 1
+    const dia = Math.floor(Math.random() * 28) + 1
+    
+    const fechaVenta = new Date(anio, mes - 1, dia)
     const fechaViaje = new Date(fechaVenta)
     fechaViaje.setDate(fechaViaje.getDate() + Math.floor(Math.random() * 90) + 30) // 30-120 días después de la venta
     
