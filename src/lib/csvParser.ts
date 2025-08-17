@@ -134,7 +134,16 @@ export function parseCSVToViajes(csvText: string): Viaje[] {
           pagado: comision5SPagada,
           porPagar: comision5SPorPagar
         },
-        porPagar
+        porPagar,
+        bonoManager: {
+          aplica: false, // Por defecto no aplica para viajes importados
+          porcentaje: 0.01,
+          comision: 0,
+          status: 'N/A' as const,
+          aprobado: false,
+          notaRechazo: undefined,
+          notaPospuesto: undefined
+        }
       }
       
       // Log de debug para las primeras 3 líneas

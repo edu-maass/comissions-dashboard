@@ -1,4 +1,4 @@
-import type { Viaje, Usuario, HighlightsPeriodo, BonoE, Bono5SE, Historico, EstatusPago } from './types'
+import type { Viaje, Usuario, HighlightsPeriodo, BonoE, Bono5SE, Historico, EstatusPago, EstatusBonoManager, BonoManager } from './types'
 
 // Generar datos mock de viajes
 export function seedViajes(): Viaje[] {
@@ -62,6 +62,51 @@ export function seedViajes(): Viaje[] {
     const liquidacionPorcentaje = esEsquemaNuevo ? 0.09 : 0.09 // 9% ambos esquemas
     
     const anticipoMonto = utilidadCotizada * anticipoPorcentaje
+    
+    // Lógica del Bono Manager
+    // Solo aplica si NO son especialistas pero son parte del mercado gestionado
+    // Para simular esto, usaremos un 20% de probabilidad
+    const aplicaBonoManager = Math.random() < 0.2 && utilidadReal !== null
+    const porcentajeBonoManager = 0.01 // 1% de la utilidad real
+    const comisionBonoManager = aplicaBonoManager ? utilidadReal * porcentajeBonoManager : 0
+    
+    // Status del Bono Manager
+    let statusBonoManager: EstatusBonoManager
+    let bonoManagerAprobado: boolean
+    let notaBonoManagerRechazo: string | undefined
+    let notaBonoManagerPospuesto: string | undefined
+    
+    if (!aplicaBonoManager) {
+      statusBonoManager = 'N/A'
+      bonoManagerAprobado = false
+    } else {
+      if (Math.random() < 0.05) {
+        // 5% de bonos pospuestos por admin
+        statusBonoManager = 'Pospuesto'
+        bonoManagerAprobado = false
+        notaBonoManagerPospuesto = ['Falta documentación', 'Esperando confirmación del cliente', 'Problemas de presupuesto'][Math.floor(Math.random() * 3)]
+      } else if (Math.random() < 0.1) {
+        // 10% de bonos con N/A (fecha no llegó)
+        statusBonoManager = 'N/A'
+        bonoManagerAprobado = false
+      } else if (Math.random() < 0.2) {
+        // 20% de bonos aprobados
+        statusBonoManager = 'Aprobado'
+        bonoManagerAprobado = true
+      } else if (Math.random() < 0.1) {
+        // 10% de bonos rechazados
+        statusBonoManager = 'Rechazado'
+        bonoManagerAprobado = false
+      } else if (Math.random() < 0.3) {
+        // 30% de bonos pagados
+        statusBonoManager = 'Pagado'
+        bonoManagerAprobado = true
+      } else {
+        // 25% de bonos pendientes
+        statusBonoManager = 'Pendiente'
+        bonoManagerAprobado = false
+      }
+    }
     
     // Nueva lógica de status para anticipo y liquidación
     let statusAnticipo: EstatusPago
@@ -212,7 +257,16 @@ export function seedViajes(): Viaje[] {
         porPagar: comision5S - comision5SPagada
       },
       porPagar,
-      ingresoMonedaOriginal
+      ingresoMonedaOriginal,
+      bonoManager: {
+        aplica: aplicaBonoManager,
+        porcentaje: porcentajeBonoManager,
+        comision: comisionBonoManager,
+        status: statusBonoManager,
+        aprobado: bonoManagerAprobado,
+        notaRechazo: notaBonoManagerRechazo,
+        notaPospuesto: notaBonoManagerPospuesto
+      }
     })
   }
   
@@ -354,6 +408,36 @@ export function getBono5SE(mes: number, anio: number, user?: Usuario, filtroEspe
     viajesCon2Reviews,
     viajesCon3Reviews,
     comisionTotal
+  }
+}
+
+// Función para obtener datos del Bono Manager
+export function getBonoManager(mes: number, anio: number, user?: Usuario, filtroEspecialista?: string): BonoManager {
+  const first = new Date(anio, mes - 1, 1)
+  const last = new Date(anio, mes, 0)
+  
+  // Filtrar viajes del período donde aplica el bono manager
+  const inRange = seedViajes().filter(v => {
+    const d = new Date(v.fechaViaje) // Usar fecha de operación, no de venta
+    const byUser = user?.rol === 'vendedor' ? v.especialista === user.nombre : true
+    const byEspecialista = filtroEspecialista ? v.especialista === filtroEspecialista : true
+    return d >= first && d <= last && byUser && byEspecialista && v.bonoManager.aplica
+  })
+  
+  const numeroViajesOperados = inRange.length
+  const sumaUtilidadReal = inRange.reduce((sum, v) => sum + (v.utilidadReal || 0), 0)
+  const sumaComisionManager = inRange.reduce((sum, v) => sum + v.bonoManager.comision, 0)
+  
+  // Calcular por pagar - solo bonos manager aprobados
+  const porPagar = inRange.reduce((sum, v) => {
+    return sum + (v.bonoManager.status === 'Aprobado' ? v.bonoManager.comision : 0)
+  }, 0)
+  
+  return {
+    numeroViajesOperados,
+    sumaUtilidadReal,
+    sumaComisionManager,
+    porPagar
   }
 }
 

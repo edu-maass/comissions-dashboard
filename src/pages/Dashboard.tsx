@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useSession } from '../state/useSession'
-import type { Viaje, HighlightsPeriodo, BonoE, Bono5SE, Filters } from '../lib/types'
+import type { Viaje, HighlightsPeriodo, BonoE, Bono5SE, BonoManager, Filters } from '../lib/types'
 import CommissionDetailModal from '../components/CommissionDetailModal'
 import CommissionsTable from '../components/CommissionsTable'
 import Reviews5STable from '../components/Reviews5STable'
+import BonoManagerTable from '../components/BonoManagerTable'
 import ExportButton from '../components/ExportButton'
-import { seedViajes, generateHistoricoMensual } from '../lib/mockData'
+import { seedViajes, generateHistoricoMensual, getBonoManager } from '../lib/mockData'
 import { fmtMXN } from '../lib/format'
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend } from 'recharts'
 import KpiCard from '../components/KpiCard'
@@ -41,6 +42,7 @@ export default function Dashboard() {
   const [highlights, setHighlights] = useState<HighlightsPeriodo | null>(null)
   const [bonoE, setBonoE] = useState<BonoE | null>(null)
   const [bono5SE, setBono5SE] = useState<Bono5SE | null>(null)
+  const [bonoManager, setBonoManager] = useState<BonoManager | null>(null)
   const [historicoMensual, setHistoricoMensual] = useState<{ mes: string; comisiones: number; anticipos: number; liquidaciones: number; reviews5S: number }[]>([])
   const [detail, setDetail] = useState<Viaje | null>(null)
 
@@ -149,7 +151,16 @@ export default function Dashboard() {
               pagado: 300,
               porPagar: 200
             },
-            porPagar: 1505
+            porPagar: 1505,
+            bonoManager: {
+              aplica: true,
+              porcentaje: 0.01,
+              comision: 220, // 1% de utilidadReal (22000)
+              status: 'Pendiente' as const,
+              aprobado: false,
+              notaRechazo: undefined,
+              notaPospuesto: undefined
+            }
           }
         ]
         
@@ -346,12 +357,17 @@ export default function Dashboard() {
     const bono5SEData = calculateBono5SE(sortedViajes)
     setBono5SE(bono5SEData)
     
+    // Calcular Bono Manager
+    const bonoManagerData = calculateBonoManager(sortedViajes)
+    setBonoManager(bonoManagerData)
+    
     console.log('✅ Datos calculados y actualizados')
     console.log('✅ highlights:', highlightsData)
     console.log('✅ bonoE:', bonoEData)
     console.log('✅ bono5SE:', bono5SEData)
+    console.log('✅ bonoManager:', bonoManagerData)
     
-  }, [filteredViajes, pageSize])
+  }, [filteredViajes, pageSize, periodo])
 
   // Monitorear cambios en los estados principales
   useEffect(() => {
@@ -369,6 +385,10 @@ export default function Dashboard() {
   useEffect(() => {
     console.log('🔄 Estado bono5SE cambió:', bono5SE)
   }, [bono5SE])
+
+  useEffect(() => {
+    console.log('🔄 Estado bonoManager cambió:', bonoManager)
+  }, [bonoManager])
 
   useEffect(() => {
     console.log('🔄 Estado loading cambió:', loading)
@@ -434,6 +454,36 @@ export default function Dashboard() {
       viajesCon2Reviews,
       viajesCon3Reviews,
       comisionTotal
+    }
+  }
+
+  // Calcular Bono Manager
+  const calculateBonoManager = (viajes: Viaje[]): BonoManager => {
+    // Filtrar viajes donde aplica el bono manager (fecha de operación en el mes seleccionado)
+    const viajesManager = viajes.filter(v => {
+      const fechaViaje = new Date(v.fechaViaje)
+      const mesSeleccionado = new Date(periodo.anio, periodo.mes - 1, 1)
+      
+      const viajeEnMes = fechaViaje.getMonth() + 1 === periodo.mes && 
+                         fechaViaje.getFullYear() === periodo.anio
+      
+      return viajeEnMes && v.bonoManager.aplica
+    })
+    
+    const numeroViajesOperados = viajesManager.length
+    const sumaUtilidadReal = viajesManager.reduce((sum, v) => sum + (v.utilidadReal || 0), 0)
+    const sumaComisionManager = viajesManager.reduce((sum, v) => sum + v.bonoManager.comision, 0)
+    
+    // Calcular por pagar - solo bonos manager aprobados
+    const porPagar = viajesManager.reduce((sum, v) => {
+      return sum + (v.bonoManager.status === 'Aprobado' ? v.bonoManager.comision : 0)
+    }, 0)
+    
+    return {
+      numeroViajesOperados,
+      sumaUtilidadReal,
+      sumaComisionManager,
+      porPagar
     }
   }
 
@@ -700,6 +750,128 @@ export default function Dashboard() {
 
               <Reviews5STable
                 data={filteredViajes.filter(v => v.reviews5S.cantidad > 0)}
+                onRowOpen={setDetail}
+              />
+            </div>
+          </section>
+
+          {/* Bono Manager */}
+          <section className="card p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Bono Manager</h2>
+            <p className="text-sm text-gray-600 mb-6">
+              El bono manager se paga sobre utilidad real en el mes en que se opera el viaje en los que ellos NO SON ESPECIALISTAS pero que sí son parte del MERCADO GESTIONADO.
+            </p>
+            
+            {/* KPIs en una línea */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow">
+                <div className="text-sm text-gray-600 font-medium mb-2">Bono Manager</div>
+                <div className="text-4xl font-bold text-gray-900 mb-2">{bonoManager ? fmtMXN(bonoManager.sumaComisionManager) : 'N/A'}</div>
+                <div className="text-sm text-gray-600">Total del período</div>
+              </div>
+              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow">
+                <div className="text-sm text-gray-600 font-medium mb-2">Utilidad Real</div>
+                <div className="text-4xl font-bold text-gray-900 mb-2">{bonoManager ? fmtMXN(bonoManager.sumaUtilidadReal) : 'N/A'}</div>
+                <div className="text-sm text-gray-600">{bonoManager ? `${bonoManager.numeroViajesOperados} viajes operados` : 'N/A'}</div>
+              </div>
+              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow">
+                <div className="text-sm text-gray-600 font-medium mb-2">Por Pagar</div>
+                <div className="text-4xl font-bold text-gray-900 mb-2">{bonoManager ? fmtMXN(bonoManager.porPagar) : 'N/A'}</div>
+                <div className="text-sm text-gray-600">Bonos aprobados</div>
+              </div>
+            </div>
+
+            {/* Gráficos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              {/* Gráfico de pastel - Utilidad real por especialista */}
+              <div className="h-80">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Utilidad Real por Especialista</h3>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={filteredViajes
+                        .filter(v => v.bonoManager.aplica && v.utilidadReal !== null)
+                        .reduce((acc, v) => {
+                          const existing = acc.find(item => item.name === v.especialista)
+                          if (existing) {
+                            existing.value += v.utilidadReal || 0
+                          } else {
+                            acc.push({ name: v.especialista, value: v.utilidadReal || 0 })
+                          }
+                          return acc
+                        }, [] as { name: string; value: number }[])
+                        .slice(0, 8)} // Top 8 especialistas
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {filteredViajes
+                        .filter(v => v.bonoManager.aplica && v.utilidadReal !== null)
+                        .reduce((acc, v) => {
+                          const existing = acc.find(item => item.name === v.especialista)
+                          if (existing) {
+                            existing.value += v.utilidadReal || 0
+                          } else {
+                            acc.push({ name: v.especialista, value: v.utilidadReal || 0 })
+                          }
+                          return acc
+                        }, [] as { name: string; value: number }[])
+                        .slice(0, 8)
+                        .map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC0CB', '#DDA0DD'][index % 8]} />
+                        ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => fmtMXN(value as number)} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Gráfico de línea - Histórico del bono manager */}
+              <div className="h-80">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Histórico del Bono Manager</h3>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={Array.from({ length: 12 }, (_, i) => {
+                    const d = new Date(periodo.anio, periodo.mes - 1 - (11 - i), 1)
+                    const mesLabel = d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' })
+                    const valor = Math.round(Math.random() * 5000 + 1000) // Simular datos históricos
+                    return { mes: mesLabel, bono: valor }
+                  })}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="mes" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => fmtMXN(value as number)} />
+                    <Line type="monotone" dataKey="bono" stroke="#8884d8" strokeWidth={3} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Tabla del Bono Manager */}
+            <div className="mt-12">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">Resumen de Comisiones Manager</h3>
+                <ExportButton
+                  rows={filteredViajes.filter(v => v.bonoManager.aplica).map(v => ({
+                    BKFI: v.booking,
+                    'Fecha Venta': new Date(v.fechaVenta).toLocaleDateString('es-MX'),
+                    'Fecha Operación': new Date(v.fechaViaje).toLocaleDateString('es-MX'),
+                    Viajero: v.viajero,
+                    'Utilidad Real': fmtMXN(v.utilidadReal || 0),
+                    'Comisión %': `${(v.bonoManager.porcentaje * 100).toFixed(1)}%`,
+                    'Comisión Total': fmtMXN(v.bonoManager.comision),
+                    'Status Bono Manager': v.bonoManager.status,
+                    'Por Pagar': fmtMXN(v.bonoManager.status === 'Aprobado' ? v.bonoManager.comision : 0)
+                  }))}
+                  filename="bono-manager-comisiones"
+                />
+              </div>
+
+              <BonoManagerTable
+                data={filteredViajes.filter(v => v.bonoManager.aplica)}
                 onRowOpen={setDetail}
               />
             </div>

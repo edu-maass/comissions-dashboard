@@ -18,6 +18,12 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate, isAdmi
   const [showNotaLiquidacion, setShowNotaLiquidacion] = useState(false)
   const [showPosponerAnticipo, setShowPosponerAnticipo] = useState(false)
   const [showPosponerLiquidacion, setShowPosponerLiquidacion] = useState(false)
+  
+  // Estados para Bono Manager
+  const [notaBonoManager, setNotaBonoManager] = useState(viaje?.bonoManager.notaRechazo || '')
+  const [notaBonoManagerPospuesto, setNotaBonoManagerPospuesto] = useState('')
+  const [showNotaBonoManager, setShowNotaBonoManager] = useState(false)
+  const [showPosponerBonoManager, setShowPosponerBonoManager] = useState(false)
 
   if (!viaje) return null
 
@@ -153,6 +159,65 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate, isAdmi
       }
       setShowPosponerLiquidacion(false)
       setNotaLiquidacionPospuesta('')
+      onClose()
+    }
+  }
+
+  // Funciones para Bono Manager
+  const handleAprobarBonoManager = () => {
+    const viajeActualizado = {
+      ...viaje,
+      bonoManager: {
+        ...viaje.bonoManager,
+        aprobado: true,
+        status: 'Aprobado' as const,
+        notaRechazo: undefined
+      }
+    }
+    if (onUpdate) {
+      onUpdate(viajeActualizado)
+    }
+    onClose()
+  }
+
+  const handleRechazarBonoManager = () => {
+    if (notaBonoManager.trim()) {
+      const viajeActualizado = {
+        ...viaje,
+        bonoManager: {
+          ...viaje.bonoManager,
+          aprobado: false,
+          status: 'Rechazado' as const,
+          notaRechazo: notaBonoManager.trim(),
+          notaPospuesto: undefined
+        }
+      }
+      if (onUpdate) {
+        onUpdate(viajeActualizado)
+      }
+      setShowNotaBonoManager(false)
+      setNotaBonoManager('')
+      onClose()
+    }
+  }
+
+  const handlePosponerBonoManager = () => {
+    if (notaBonoManagerPospuesto.trim()) {
+      const viajeActualizado = {
+        ...viaje,
+        bonoManager: {
+          ...viaje.bonoManager,
+          aprobado: false,
+          status: 'Pospuesto' as const,
+          notaPospuesto: notaBonoManagerPospuesto.trim(),
+          notaRechazo: undefined
+        }
+      }
+      if (onUpdate) {
+        onUpdate(viajeActualizado)
+      }
+      setShowPosponerBonoManager(false)
+      setNotaBonoManagerPospuesto('')
       onClose()
     }
   }
@@ -303,63 +368,111 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate, isAdmi
           )}
         </div>
 
-        {/* Aprobación de Liquidación */}
-        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-          <h3 className="font-semibold text-gray-900 mb-3">Aprobación de Liquidación</h3>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-600">Estado:</span>
-            {viaje.liquidacion.status === 'N/A' ? (
-              <span className="text-gray-600 text-sm">No aplica</span>
-            ) : viaje.liquidacion.status === 'Pospuesto' ? (
-              <span className="text-purple-600 text-sm">Pospuesto por Admin</span>
-            ) : viaje.liquidacion.status === 'Pagado' ? (
-              <span className="text-blue-600 text-sm">Pagado</span>
-            ) : viaje.liquidacion.status === 'Aprobado' ? (
-              <span className="text-green-600 text-sm">✓ Aprobado</span>
-            ) : viaje.liquidacion.status === 'Rechazado' ? (
-              <span className="text-red-600 text-sm">✗ Rechazado</span>
-            ) : (
-              <span className="text-yellow-600 text-sm">Pendiente de revisión</span>
-            )}
+        {/* Sección de Liquidación */}
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">Liquidación</h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="font-medium text-gray-700">Status:</span>
+              <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                viaje.liquidacion.status === 'N/A' ? 'bg-gray-100 text-gray-800' :
+                viaje.liquidacion.status === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' :
+                viaje.liquidacion.status === 'Aprobado' ? 'bg-green-100 text-green-800' :
+                viaje.liquidacion.status === 'Rechazado' ? 'bg-red-100 text-red-800' :
+                viaje.liquidacion.status === 'Pospuesto' ? 'bg-purple-100 text-purple-800' :
+                'bg-blue-100 text-blue-800'
+              }`}>
+                {viaje.liquidacion.status}
+              </span>
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">Monto:</span>
+              <span className="ml-2 font-semibold text-green-600">{fmtMXN(viaje.liquidacion.monto)}</span>
+            </div>
           </div>
           
-          {viaje.liquidacion.notaRechazo && (
-            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-              <p className="text-sm text-red-700"><strong>Nota de rechazo:</strong> {viaje.liquidacion.notaRechazo}</p>
+          {viaje.liquidacion.status === 'Rechazado' && viaje.liquidacion.notaRechazo && (
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded">
+              <div className="text-sm font-medium text-red-800">Nota de Rechazo:</div>
+              <div className="text-sm text-red-700 mt-1">{viaje.liquidacion.notaRechazo}</div>
             </div>
           )}
-
-          {viaje.liquidacion.notaPospuesto && (
-            <div className="mt-2 p-2 bg-purple-50 border border-purple-200 rounded">
-              <p className="text-sm text-purple-700"><strong>Nota de posposición:</strong> {viaje.liquidacion.notaPospuesto}</p>
+          
+          {viaje.liquidacion.status === 'Pospuesto' && viaje.liquidacion.notaPospuesto && (
+            <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded">
+              <div className="text-sm font-medium text-purple-800">Nota de Pospuesto:</div>
+              <div className="text-sm text-purple-700 mt-1">{viaje.liquidacion.notaPospuesto}</div>
             </div>
           )}
-
+          
           {viaje.liquidacion.status === 'Pendiente' && (
             <div className="mt-3 flex gap-2">
-              <button
-                onClick={handleAprobarLiquidacion}
-                className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-              >
-                Aprobar
-              </button>
-              <button
-                onClick={() => setShowNotaLiquidacion(true)}
-                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
-              >
-                Rechazar
-              </button>
+              <button onClick={handleAprobarLiquidacion} className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">Aprobar</button>
+              <button onClick={() => setShowNotaLiquidacion(true)} className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">Rechazar</button>
               {isAdmin && (
-                <button
-                  onClick={() => setShowPosponerLiquidacion(true)}
-                  className="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700"
-                >
-                  Posponer
-                </button>
+                <button onClick={() => setShowPosponerLiquidacion(true)} className="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700">Posponer</button>
               )}
             </div>
           )}
         </div>
+
+        {/* Sección de Bono Manager */}
+        {viaje.bonoManager.aplica && (
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h3 className="text-lg font-semibold text-blue-900 mb-3">Bono Manager</h3>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="font-medium text-gray-700">Status:</span>
+                <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                  viaje.bonoManager.status === 'N/A' ? 'bg-gray-100 text-gray-800' :
+                  viaje.bonoManager.status === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' :
+                  viaje.bonoManager.status === 'Aprobado' ? 'bg-green-100 text-green-800' :
+                  viaje.bonoManager.status === 'Rechazado' ? 'bg-red-100 text-red-800' :
+                  viaje.bonoManager.status === 'Pospuesto' ? 'bg-purple-100 text-purple-800' :
+                  'bg-blue-100 text-blue-800'
+                }`}>
+                  {viaje.bonoManager.status}
+                </span>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Comisión:</span>
+                <span className="ml-2 font-semibold text-blue-600">{fmtMXN(viaje.bonoManager.comision)}</span>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Porcentaje:</span>
+                <span className="ml-2 font-semibold text-blue-600">{(viaje.bonoManager.porcentaje * 100).toFixed(1)}%</span>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Utilidad Real:</span>
+                <span className="ml-2 font-semibold text-blue-600">{viaje.utilidadReal ? fmtMXN(viaje.utilidadReal) : 'N/A'}</span>
+              </div>
+            </div>
+            
+            {viaje.bonoManager.status === 'Rechazado' && viaje.bonoManager.notaRechazo && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded">
+                <div className="text-sm font-medium text-red-800">Nota de Rechazo:</div>
+                <div className="text-sm text-red-700 mt-1">{viaje.bonoManager.notaRechazo}</div>
+              </div>
+            )}
+            
+            {viaje.bonoManager.status === 'Pospuesto' && viaje.bonoManager.notaPospuesto && (
+              <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded">
+                <div className="text-sm font-medium text-purple-800">Nota de Pospuesto:</div>
+                <div className="text-sm text-purple-700 mt-1">{viaje.bonoManager.notaPospuesto}</div>
+              </div>
+            )}
+            
+            {viaje.bonoManager.status === 'Pendiente' && (
+              <div className="mt-3 flex gap-2">
+                <button onClick={handleAprobarBonoManager} className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">Aprobar</button>
+                <button onClick={() => setShowNotaBonoManager(true)} className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">Rechazar</button>
+                {isAdmin && (
+                  <button onClick={() => setShowPosponerBonoManager(true)} className="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700">Posponer</button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Modal para nota de comisión */}
         {showNotaAnticipo && (
@@ -478,6 +591,67 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate, isAdmi
                 </button>
                 <button
                   onClick={() => setShowPosponerLiquidacion(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para nota de Bono Manager */}
+        {showNotaBonoManager && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">Rechazar Bono Manager</h3>
+              <textarea
+                value={notaBonoManager}
+                onChange={(e) => setNotaBonoManager(e.target.value)}
+                placeholder="Ingresa la razón del rechazo..."
+                className="w-full p-3 border border-gray-300 rounded-lg mb-4 h-24 resize-none"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={handleRechazarBonoManager}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Rechazar
+                </button>
+                <button
+                  onClick={() => setShowNotaBonoManager(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para posponer Bono Manager */}
+        {showPosponerBonoManager && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">Posponer Bono Manager</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Solo los administradores pueden posponer el bono manager.
+              </p>
+              <textarea
+                value={notaBonoManagerPospuesto}
+                onChange={(e) => setNotaBonoManagerPospuesto(e.target.value)}
+                placeholder="Ingresa la razón de la posposición..."
+                className="w-full p-3 border border-gray-300 rounded-lg mb-4 h-24 resize-none"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={handlePosponerBonoManager}
+                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                >
+                  Posponer
+                </button>
+                <button
+                  onClick={() => setShowPosponerBonoManager(false)}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
                 >
                   Cancelar

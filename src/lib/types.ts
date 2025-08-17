@@ -64,6 +64,8 @@ export type Viaje = {
     porPagar: number
   }
   porPagar: number
+  // Bono Manager - Solo para viajes donde NO son especialistas pero son parte del mercado gestionado
+  bonoManager: BonoManagerViaje
   // Campos de aprobación (removidos del nivel principal)
   // comisionAprobada?: boolean
   // notaComision?: string
@@ -99,6 +101,28 @@ export type Bono5SE = {
   viajesCon2Reviews: number
   viajesCon3Reviews: number
   comisionTotal: number
+}
+
+// Bono Manager - Datos principales
+export type BonoManager = {
+  numeroViajesOperados: number
+  sumaUtilidadReal: number
+  sumaComisionManager: number
+  porPagar: number
+}
+
+// Estatus del Bono Manager
+export type EstatusBonoManager = 'N/A' | 'Pendiente' | 'Aprobado' | 'Rechazado' | 'Pospuesto' | 'Pagado'
+
+// Estructura del Bono Manager en cada viaje
+export type BonoManagerViaje = {
+  aplica: boolean
+  porcentaje: number // 1% por defecto
+  comision: number
+  status: EstatusBonoManager
+  aprobado?: boolean
+  notaRechazo?: string
+  notaPospuesto?: string
 }
 
 // Histórico mensual
