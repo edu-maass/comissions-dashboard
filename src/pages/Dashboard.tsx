@@ -713,6 +713,7 @@ export default function Dashboard() {
           viaje={detail}
           onClose={() => setDetail(null)}
           onUpdate={handleUpdateViaje}
+          isAdmin={user?.rol === 'admin'}
         />
       )}
     </div>

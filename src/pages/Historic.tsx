@@ -159,6 +159,7 @@ export default function Historic() {
           viaje={detail}
           onClose={() => setDetail(null)}
           onUpdate={handleUpdateViaje}
+          isAdmin={user?.rol === 'admin'}
         />
       )}
     </div>

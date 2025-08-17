@@ -6,9 +6,10 @@ interface Props {
   viaje: Viaje | null
   onClose: () => void
   onUpdate?: (viaje: Viaje) => void
+  isAdmin?: boolean // Prop para identificar si el usuario es administrador
 }
 
-export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Props) {
+export default function CommissionDetailModal({ viaje, onClose, onUpdate, isAdmin = false }: Props) {
   const [notaAnticipo, setNotaAnticipo] = useState(viaje?.anticipo.notaRechazo || '')
   const [notaLiquidacion, setNotaLiquidacion] = useState(viaje?.liquidacion.notaRechazo || '')
   const [notaAnticipoPospuesto, setNotaAnticipoPospuesto] = useState(viaje?.anticipo.notaPospuesto || '')
@@ -290,12 +291,14 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
               >
                 Rechazar
               </button>
-              <button
-                onClick={() => setShowPosponerAnticipo(true)}
-                className="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700"
-              >
-                Posponer
-              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => setShowPosponerAnticipo(true)}
+                  className="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700"
+                >
+                  Posponer
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -346,12 +349,14 @@ export default function CommissionDetailModal({ viaje, onClose, onUpdate }: Prop
               >
                 Rechazar
               </button>
-              <button
-                onClick={() => setShowPosponerLiquidacion(true)}
-                className="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700"
-              >
-                Posponer
-              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => setShowPosponerLiquidacion(true)}
+                  className="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700"
+                >
+                  Posponer
+                </button>
+              )}
             </div>
           )}
         </div>
