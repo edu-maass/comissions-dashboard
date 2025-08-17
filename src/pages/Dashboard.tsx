@@ -16,7 +16,17 @@ import Sparkline from '../components/Sparkline'
 export default function Dashboard() {
   const { user } = useSession()
   const now = new Date()
-  const [periodo, setPeriodo] = useState({ mes: now.getMonth() + 1, anio: now.getFullYear() })
+  // Corregir el estado inicial del período - usar mes actual (1-12) y año actual
+  const [periodo, setPeriodo] = useState({ 
+    mes: now.getMonth() + 1, // getMonth() retorna 0-11, queremos 1-12
+    anio: now.getFullYear() 
+  })
+  
+  // Función para manejar cambios en el período
+  const handlePeriodoChange = (nuevoPeriodo: { mes: number; anio: number }) => {
+    console.log('🔄 Cambiando período de', periodo, 'a', nuevoPeriodo)
+    setPeriodo(nuevoPeriodo)
+  }
   const [filters, setFilters] = useState<Filters>({
     especialista: '',
     rol: undefined,
@@ -159,7 +169,7 @@ export default function Dashboard() {
   const filteredViajes = useMemo(() => {
     console.log('🔄 Filtrando viajes...')
     console.log('🔄 allViajes.length:', allViajes.length)
-    console.log('🔄 periodo:', periodo)
+    console.log('🔄 periodo seleccionado:', periodo)
     
     if (allViajes.length === 0) {
       console.log('⚠️ No hay viajes para filtrar')
@@ -172,18 +182,44 @@ export default function Dashboard() {
     const filteredByPeriod = filtered.filter(v => {
       const fechaViaje = new Date(v.fechaViaje)
       const fechaVenta = new Date(v.fechaVenta)
-      const mesSeleccionado = new Date(periodo.anio, periodo.mes - 1, 1)
+      
+      // Debug: mostrar fechas del viaje
+      if (v.id === 'test_1') {
+        console.log('🔍 Viaje test_1:', {
+          id: v.id,
+          fechaViaje: fechaViaje.toISOString(),
+          fechaVenta: fechaVenta.toISOString(),
+          periodo: periodo,
+          mesSeleccionado: `${periodo.mes}/${periodo.anio}`
+        })
+      }
       
       // Verificar si la fecha de viaje o fecha de venta está en el mes seleccionado
-      const viajeEnMes = fechaViaje.getMonth() === mesSeleccionado.getMonth() && 
-                         fechaViaje.getFullYear() === mesSeleccionado.getFullYear()
-      const ventaEnMes = fechaVenta.getMonth() === mesSeleccionado.getMonth() && 
-                         fechaVenta.getFullYear() === mesSeleccionado.getFullYear()
+      const viajeEnMes = fechaViaje.getMonth() + 1 === periodo.mes && 
+                         fechaViaje.getFullYear() === periodo.anio
+      const ventaEnMes = fechaVenta.getMonth() + 1 === periodo.mes && 
+                         fechaVenta.getFullYear() === periodo.anio
       
-      return viajeEnMes || ventaEnMes
+      const incluir = viajeEnMes || ventaEnMes
+      
+      if (v.id === 'test_1') {
+        console.log('🔍 Resultado filtro:', {
+          viajeEnMes,
+          ventaEnMes,
+          incluir
+        })
+      }
+      
+      return incluir
     })
     
     console.log(`🔍 Después de filtro período: ${filteredByPeriod.length} viajes`)
+    console.log(`🔍 Viajes filtrados:`, filteredByPeriod.map(v => ({
+      id: v.id,
+      booking: v.booking,
+      fechaVenta: new Date(v.fechaVenta).toLocaleDateString(),
+      fechaViaje: new Date(v.fechaViaje).toLocaleDateString()
+    })))
     
     if (filteredByPeriod.length === 0) {
       console.log(`⚠️ No hay datos para ${periodo.mes}/${periodo.anio}, mostrando datos recientes`)
@@ -413,7 +449,7 @@ export default function Dashboard() {
             <p className="text-xs text-green-600 mt-1">✅ {allViajes.length} viajes cargados desde datos mock</p>
           )}
         </div>
-        <MonthPicker value={periodo} onChange={setPeriodo} />
+        <MonthPicker value={periodo} onChange={handlePeriodoChange} />
       </div>
 
       {/* Loading state */}

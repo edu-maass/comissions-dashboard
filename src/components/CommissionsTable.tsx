@@ -213,7 +213,7 @@ export default function CommissionsTable({ data, onRowOpen }:{ data:Viaje[]; onR
     <div className="card">
       <div ref={parentRef} className="max-h-[520px] overflow-auto">
         <table className="w-full border-collapse">
-          <thead className="sticky top-0 bg-white border-b border-gray-200 z-10">
+          <thead className="sticky top-0 bg-white border-b border-gray-200 z-20">
             {table.getHeaderGroups().map(hg=> (
               <tr key={hg.id}>
                 {hg.headers.map((h, index)=> (
@@ -223,7 +223,15 @@ export default function CommissionsTable({ data, onRowOpen }:{ data:Viaje[]; onR
                       index === 0 ? 'sticky-left-header' : ''
                     }`}
                     onClick={h.column.getToggleSortingHandler()}
-                    style={{ minWidth: '120px' }}
+                    style={{ 
+                      minWidth: '120px',
+                      ...(index === 0 && { 
+                        position: 'sticky',
+                        left: 0,
+                        zIndex: 30,
+                        backgroundColor: 'white'
+                      })
+                    }}
                   >
                     <div className="flex items-center justify-between">
                       <span className="truncate">{flexRender(h.column.columnDef.header, h.getContext())}</span>
@@ -249,7 +257,15 @@ export default function CommissionsTable({ data, onRowOpen }:{ data:Viaje[]; onR
                     className={`px-3 py-3 text-sm border-r border-gray-100 last:border-r-0 ${
                       index === 0 ? 'sticky-left bg-white' : ''
                     }`}
-                    style={{ minWidth: '120px' }}
+                    style={{ 
+                      minWidth: '120px',
+                      ...(index === 0 && { 
+                        position: 'sticky',
+                        left: 0,
+                        zIndex: 20,
+                        backgroundColor: 'white'
+                      })
+                    }}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
